@@ -150,7 +150,7 @@ export default {
         color: #000;
         background-color: #fff;
         padding: 0.5rem;
-        border: 3px solid #d44cfc;
+        border: 3px solid #b54de6;
         border-radius: 4px;
     }
     
@@ -168,7 +168,7 @@ export default {
       pink background, white text, etc.
     */
     .primary-button {
-        background-color: #d44cfc;
+        background-color: #b54de6;
         color: #000;
         padding: 0.75rem 1.5rem;
         border: none;
@@ -178,7 +178,7 @@ export default {
     }
     
     .primary-button:hover {
-        background-color: #d44cfc;
+        background-color: #b54de6;
     }
     
     /* 
