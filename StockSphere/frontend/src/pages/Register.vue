@@ -1,7 +1,7 @@
 <template>
     <div class="register-container">
         <div class="form-card">
-            <h2>Sign Up</h2> 
+            <h1>Sign Up</h1> 
             <form @submit.prevent = "register">
                 <div class="form-grid">
                     <div class="form-group">
@@ -101,23 +101,33 @@ export default {
         display: flex;
         justify-content: center;
         align-items: flex-start;
-        min-height: 100vh; /* Fill the full browser height */
+        padding: 100px 0px;
         padding: 2rem;
+        min-height: calc(100vh - 120px);
+        overflow: auto;
+        background-color: #171A23; /* Purple & deeper purple */ /* Slightly warm dark */
     }
+
+    
     
     .form-card {
-        background: #fff;
+        background: #171A23;
         border-radius: 8px;
         width: 600px;
         max-width: 90%;
-        padding: 2rem;
+        padding: 50px 15px;
+        margin-top: 20px;
+        color: #EAEAEA;
+        text-align: left;
+        overflow: auto;
+        margin-bottom: 30px;
     }
 
     .form-card h2 {
         text-align: left;
         margin-top: 0;
         margin-bottom: 1.5rem;
-        color: #000; /* Adjust to your brand color */
+        color: #EAEAEA;
     }
     
     /* 
@@ -127,7 +137,7 @@ export default {
     .form-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1rem; /* space between columns and rows */
+        gap: 2rem 5rem; /* space between columns and rows */
         margin-bottom: 1rem;
     }
     
@@ -141,17 +151,28 @@ export default {
     
     .form-group label {
         text-align: left;
-        color: #000;
+        color: #EAEAEA;
         font-weight: bold;
         margin-bottom: 0.5rem;
     }
     
     .form-group input {
-        color: #000;
-        background-color: #fff;
-        padding: 0.5rem;
-        border: 3px solid #b54de6;
-        border-radius: 4px;
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid #b54de6; /* Subtle border */
+        border-radius: 8px; /* Rounded edges for modern look */
+        font-size: 1rem;
+        transition: all 0.3s ease-in-out; /* Smooth transitions */
+        background-color: #D1D5DB; /* Light background for contrast */
+        box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1); /* Soft inner shadow */
+        color: black;
+    }
+
+    .form-group input:focus {
+        border-color: #9c3fd9; /* Darker shade for interaction */
+        background-color: white;
+        outline: none;
+        box-shadow: 0px 4px 8px rgba(42, 1, 61, 0.3); /* Glow effect */
     }
     
     /* 
@@ -160,7 +181,7 @@ export default {
     .note {
         margin: 1rem 0;
         font-size: 0.9rem;
-        color: #000;
+        color: #eaeaea;
     }
     
     /* 
@@ -168,13 +189,18 @@ export default {
       pink background, white text, etc.
     */
     .primary-button {
-        background-color: #b54de6;
-        color: #000;
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 1rem;
+        display: inline-block;
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #b54de6, #9c3fd9); /* Soft gradient */
+    border: none;
+    border-radius: 8px; /* Rounded corners */
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0px 4px 10px rgba(181, 77, 230, 0.3); /* Soft outer shadow */
     }
     
     .primary-button:hover {

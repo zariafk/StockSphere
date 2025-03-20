@@ -1,7 +1,7 @@
 <template>
     <div class="login-container">
         <div class="form-card">
-            <h2>Login</h2> 
+            <h1>Login</h1> 
             <form @submit.prevent="login">
                 <div class="form-grid">
                     <div class="form-group">
@@ -56,31 +56,31 @@ export default {
     .login-container {
         display: flex;
         justify-content: center;
-        align-items: flex-start;
-        min-height: 100vh; /* Fill the full browser height */
-        padding: 2rem;
+        align-items: center;
+        margin: 0;
+        padding: 75px 0px;
     }
 
     .form-card {
-        background: #fff;
+        background: #171a23;
         border-radius: 8px;
         width: 600px;
         max-width: 90%;
         padding: 2rem;
     }
 
-    .form-card h2 {
+    .form-card h1 {
         text-align: left;
         margin-top: 0;
         margin-bottom: 1.5rem;
-        color: #000; /* Adjust to your brand color */
+        color: #eaeaea; /* Adjust to your brand color */
     }
 
     .form-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1rem; /* space between columns and rows */
-        margin-bottom: 1rem;
+        gap: 3rem; /* space between columns and rows */
+        margin-bottom: 2rem;
     }
 
     .form-group {
@@ -90,13 +90,13 @@ export default {
 
     .form-group label {
         text-align: left;
-        color: #000;
+        color: #eaeaea;
         font-weight: bold;
         margin-bottom: 0.5rem;
     }
     
     .form-group input {
-        color: #000;
+        color: #eaeaea;
         background-color: #fff;
         padding: 0.5rem;
         border: 3px solid #b54de6;
@@ -105,7 +105,7 @@ export default {
 
     .primary-button {
         background-color: #b54de6;
-        color: #000;
+        color: #eaeaea;
         padding: 0.75rem 1.5rem;
         border: none;
         border-radius: 4px;
