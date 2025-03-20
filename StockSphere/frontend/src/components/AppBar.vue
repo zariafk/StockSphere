@@ -1,27 +1,59 @@
 <template>
-    <div class="app-bar">
+    <nav class="app-bar">
       <h1 class="logo-text">StockSphere</h1>
-    </div>
+      <div v-if="!$route.meta.hideTabs" class="tabs">
+        <router-link to="/dashboard">Dashboard</router-link>
+      </div>
+    </nav>
   </template>
   
   <script>
   export default {
     name: "AppBar",
   };
-  </script>
+</script>
   
-  <style scoped>
-  .app-bar {
-    background-color: #b54de6; /* Use your color code here */
-    padding: 25px 25px;
-    text-align: left;
-    width: 100vw;
-  }
+<style scoped>
+    .app-bar {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #b54de6;
+        padding: 20px 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 90vw;
+        height: 70px;
+        border-radius: 15px;
+        box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease-in-out;
+    }
   
-  .logo-text {
-    color: white;
-    font-weight: bold;
-    font-size: 1.5rem;
-    margin: 0;
-  }
+    .logo-text {
+        color: white;
+        font-weight: bold;
+        font-size: 1.5rem;
+        margin: 0;
+    }
+
+    .tabs a {
+        margin: 0 20px;
+        text-decoration: none;
+        color: white;
+        padding: 5px 10px;
+        border-bottom: 2px solid transparent;
+    }
+
+    .tabs a.router-link-active {
+        background-color: rgba(255, 255, 255, 0.2); /* Slight white tint */
+        box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.5); /* Subtle glow */
+    }
+
+    .tabs a:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease-in-out;
+    }
   </style>

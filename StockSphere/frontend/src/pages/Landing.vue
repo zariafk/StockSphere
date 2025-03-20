@@ -51,13 +51,14 @@
   <style scoped>
     .landing-page {
         text-align: left;
-        color: #000;
+        color: #eaeaea;
+        margin: 100px 70px;
 
     }
 
     .register-button {
         background-color: #b54de6;
-        color: #000;
+        color: #eaeaea;
         padding: 0.75rem 1.5rem;
         border: 3px solid #b54de6;
         border-radius: 4px;
@@ -66,8 +67,8 @@
     }
 
     .login-button {
-        background-color: white;
-        color: #000;
+        background-color: #171a23;
+        color: #eaeaea;
         padding: 0.75rem 1.5rem;
         border: 3px solid #b54de6;
         border-radius: 4px;
@@ -76,7 +77,9 @@
     }
 
     button + button {
+        margin-top: 20px;
         margin-left: 16px;
+        margin-bottom: 35px;
     }
 
     .features-container {
@@ -99,7 +102,7 @@
     .feature-item p {
         font-size: 1rem;
         line-height: 1.4;
-        color: #555;
+        color: #dadada;
     }
 
     /* placeholder icons */
