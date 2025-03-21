@@ -8,6 +8,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm
 
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Resource
+from .serializers import ResourceSerializer
+
+# AUTHENTICATION
 @ensure_csrf_cookie
 @require_http_methods(['GET'])
 def set_csrf_token(request):
@@ -60,3 +66,33 @@ def register(request):
     else:
         errors = form.errors.as_json()
         return JsonResponse({'error': errors}, status=400)
+    
+
+# PRODUCTS
+@require_http_methods(['GET'])
+@login_required
+def get_resources(request):
+    """
+    Fetch only the resources that belong to the authenticated user.
+    """
+    resources = Resource.objects.filter(user=request.user)  # Get only the logged-in user's products
+    serializer = ResourceSerializer(resources, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
+
+@require_http_methods(['POST'])
+@login_required
+def add_resource(request):
+    """
+    Add a new product linked to the authenticated user.
+    """
+    try:
+        data = json.loads(request.body)
+        serializer = ResourceSerializer(data=data)
+
+        if serializer.is_valid():
+            serializer.save(user=request.user)  # Assign product to logged-in user
+            return JsonResponse(serializer.data, status=201)
+        return JsonResponse(serializer.errors, status=400)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)

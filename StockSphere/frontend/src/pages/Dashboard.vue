@@ -1,3 +1,16 @@
+<template>
+    <div class="dashboard-container">
+        <h1>Dashboard</h1> 
+        <div v-if = "authStore.isAuthenticated">
+            <h2>Hello {{authStore.user?.username}}!</h2> 
+            <button @click = "logout" >Logout</button> 
+        </div> 
+        <p v-else>
+            You are not logged in.<router-link to="/login">Login</router-link>
+        </p> 
+    </div>
+</template>
+
 <script>
     import {
         useAuthStore
@@ -30,19 +43,6 @@ export default {
     }
 } 
 </script>
-
-<template>
-    <div class="dashboard-container">
-        <h1>Dashboard</h1> 
-        <div v-if = "authStore.isAuthenticated">
-            <h2>Hello {{authStore.user?.username}}!</h2> 
-            <button @click = "logout" >Logout</button> 
-        </div> 
-        <p v-else>
-            You are not logged in.<router-link to="/login">Login</router-link>
-        </p> 
-    </div>
-</template>
 
 <style scoped>
     .dashboard-container {
