@@ -1,11 +1,35 @@
 <template>
     <div class="resources-container">
         <h1>Resources</h1>
-            <ul>
-                <li v-for="resource in resourceStore.resources" :key="resource.id">
-                    {{ resource.name }} - ${{ resource.price_per_pack }} ({{ resource.units_per_pack }} units per pack)
-                </li>
-            </ul>
+            <table class="resource-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price Per Pack</th>
+                        <th>Units Per Pack</th>
+                        <th>Unit Price</th>
+                        <th>Available Units</th>
+                        <th>Arriving Units</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="resource in resourceStore.resources" :key="resource.id">
+                        <td>{{ resource.name }}</td>
+                        <td>${{ Number(resource.price_per_pack).toFixed(2) }}</td>
+                        <td>{{ resource.units_per_pack }}</td>
+                        <td>${{ Number(resource.unit_price).toFixed(2) }}</td>
+                        <td>{{ resource.available_units }}</td>
+                        <td>{{ resource.arriving_units }}</td>
+                        <td>{{ resource.notes }}</td>
+                        <td>
+                            <PencilLine size="16" class="icon-button edit" @click="startEdit(resource)" title="Edit" />
+                            <Trash2 size="16" class="icon-button delete" @click="deleteResource(resource.id)" title="Delete" />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
 
             <button class="open-modal" @click="showModal = true">Add resource</button>
 
@@ -40,7 +64,7 @@
                         </div>
 
                         <div class="modal-buttons">
-                            <button class="submit-button" @click="addResource">Add Resource</button>
+                            <button class="submit-button" @click="saveResource">{{ editMode ? "Save Changes" : "Add Resource" }}</button>
                             <button class="close-button" @click="showModal = false">Cancel</button>
                         </div>
                     </div>
@@ -52,20 +76,73 @@
 <script setup>
     import { onMounted, ref } from "vue";
     import { useResourceStore } from "../store/resources";
+    import { PencilLine, Trash2 } from 'lucide-vue-next';
 
     const resourceStore = useResourceStore();
     const showModal = ref(false);
+
     const name = ref("");
     const price_per_pack = ref("");
     const units_per_pack = ref("");
     const available_units = ref("");
     const arriving_units = ref("");
     const notes = ref("");
+
+    const editMode = ref(false)
+    const editingId = ref(null)
         
     onMounted(() => {
         resourceStore.fetchResources();
     });
+
+    const saveResource = async () => {
+        const payload = {
+            name: name.value,
+            price_per_pack: parseFloat(price_per_pack.value),
+            units_per_pack: parseInt(units_per_pack.value),
+            available_units: parseInt(available_units.value),
+            arriving_units: parseInt(arriving_units.value),
+            notes: notes.value,
+        }
+
+        if (editMode.value && editingId.value !== null) {
+            await resourceStore.updateResource(editingId.value, payload)
+        } else {
+            await resourceStore.addResource(payload)
+        }
+
+        resetForm()
+        showModal.value = false
+    }
+
+    const startEdit = (resource) => {
+        name.value = resource.name
+        price_per_pack.value = resource.price_per_pack
+        units_per_pack.value = resource.units_per_pack
+        available_units.value = resource.available_units
+        arriving_units.value = resource.arriving_units
+        notes.value = resource.notes
+        editingId.value = resource.id
+        editMode.value = true
+        showModal.value = true
+    }
+
+    const resetForm = () => {
+        name.value = ""
+        price_per_pack.value = ""
+        units_per_pack.value = ""
+        available_units.value = ""
+        arriving_units.value = ""
+        notes.value = ""
+        editingId.value = null
+        editMode.value = false
+    }
+
+    const deleteResource = async (id) => {
+        await resourceStore.deleteResource(id)
+    }
         
+    /*
     const addResource = async () => {
     await resourceStore.addResource({
         name: name.value,
@@ -75,6 +152,7 @@
         arriving_units: parseInt(arriving_units.value),
         notes: notes.value
     });
+    
         
         name.value = "";
         price_per_pack.value = "";
@@ -84,7 +162,7 @@
         notes.value = "";
 
         showModal.value = false;
-    };
+    };*/
 </script>
 
 <style scoped>
@@ -93,6 +171,33 @@
         margin-top: 100px;
         margin-left: 70px;
         text-align: left;
+    }
+
+    .resource-table {
+        width: 100%;
+        margin-top: 20px;
+    border-collapse: collapse;
+    background-color: #1e1e2e;
+    color: #eaeaea;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 14px;
+    }
+
+    .resource-table th,
+    .resource-table td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #333;
+    }
+
+    .resource-table th {
+        background-color: #2b2e3d;
+        font-weight: bold;
+    }
+
+    .resource-table tr:hover {
+        background-color: #2e3344;
     }
 
     .form {
@@ -169,5 +274,31 @@
         cursor: pointer;
         border-radius: 5px;
         flex: 1;
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .icon-button {
+        cursor: pointer;
+        width: 18px;
+        height: 18px;
+        color: #eaeaea;
+        transition: color 0.2s;
+    }
+
+    .edit {
+        margin-right: 10px;
+    }
+
+    .edit:hover {
+        color: #3b82f6; /* red on hover for delete */
+    }
+
+    .delete:hover {
+        color: #ff5555
     }
 </style>

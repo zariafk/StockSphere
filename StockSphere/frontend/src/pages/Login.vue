@@ -96,7 +96,7 @@ export default {
     }
     
     .form-group input {
-        color: #eaeaea;
+        color: #000;
         background-color: #fff;
         padding: 0.5rem;
         border: 3px solid #b54de6;

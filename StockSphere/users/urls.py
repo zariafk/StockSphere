@@ -9,7 +9,9 @@ urlpatterns = [
     path('api/user', views.user, name='user'),
     path('api/register', views.register, name='register'),
 
-    #PRODUCTS endpoints
+    #RESOURCES endpoints
     path('api/resources', views.get_resources, name='get_resources'),
     path('api/resources/add', views.add_resource, name='add_resource'),
+    path('api/resources/<int:resource_id>/update', views.update_resource, name='update_resource'),
+    path('api/resources/<int:resource_id>/delete', views.delete_resource, name='delete_resource'),
 ]

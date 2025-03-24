@@ -12,7 +12,7 @@ class Resource(models.Model):
     units_per_pack = models.PositiveIntegerField()  # Number of units in a pack
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  # Auto-calculated
     available_units = models.PositiveIntegerField()  # How many units are in stock
-    arriving_units = models.PositiveIntegerField()  # Expected arrival of units
+    arriving_units = models.PositiveIntegerField(blank=True, null=True)  # Expected arrival of units
     notes = models.TextField(blank=True, null=True)  # Additional notes
     created_at = models.DateTimeField(auto_now_add=True)
 

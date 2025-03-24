@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { useAuthStore } from "./auth";
+import { useAuthStore, getCSRFToken } from "./auth";
 
 export const useResourceStore = defineStore("resource", () => {
     const authStore = useAuthStore();
@@ -8,11 +8,12 @@ export const useResourceStore = defineStore("resource", () => {
 
     // Fetch only the authenticated user's products
     const fetchResources = async () => {
-        if (!authStore.token) return;
-
         try {
-            const response = await fetch("http://localhost:8000/api/resources/", {
-                headers: { Authorization: `Bearer ${authStore.token}` },
+            const response = await fetch("http://localhost:8000/api/resources", {
+                headers: { 
+                    "X-CSRFToken": getCSRFToken(), 
+                },
+                credentials: "include",
             });
             resources.value = await response.json();
         } catch (error) {
@@ -22,15 +23,14 @@ export const useResourceStore = defineStore("resource", () => {
 
     // Add a new resource
     const addResource = async (resourceData) => {
-        if (!authStore.token) return;
-
         try {
-            const response = await fetch("http://localhost:8000/api/resources/add/", {
+            const response = await fetch("http://localhost:8000/api/resources/add", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${authStore.token}`,
+                    "X-CSRFToken": getCSRFToken(),
                 },
+                credentials: "include",
                 body: JSON.stringify(resourceData),
             });
 
@@ -41,5 +41,46 @@ export const useResourceStore = defineStore("resource", () => {
         }
     };
 
-    return { resources, fetchResources, addResource };
+    const updateResource = async (id, updatedData) => {
+        try {
+          const response = await fetch(`http://localhost:8000/api/resources/${id}/update`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCSRFToken(),
+            },
+            credentials: "include",
+            body: JSON.stringify(updatedData),
+          })
+      
+          if (response.ok) {
+            const updated = await response.json()
+            const index = resources.value.findIndex((r) => r.id === id)
+            if (index !== -1) resources.value[index] = updated
+          }
+        } catch (error) {
+          console.error("Failed to update resource", error)
+        }
+      }
+      
+      const deleteResource = async (id) => {
+        try {
+          const response = await fetch(`http://localhost:8000/api/resources/${id}/delete`, {
+            method: "DELETE",
+            headers: {
+              "X-CSRFToken": getCSRFToken(),
+            },
+            credentials: "include",
+          })
+      
+          if (response.ok) {
+            resources.value = resources.value.filter((r) => r.id !== id)
+          }
+        } catch (error) {
+          console.error("Failed to delete resource", error)
+        }
+      }
+
+    return { resources, fetchResources, addResource, updateResource, deleteResource };
 });
+

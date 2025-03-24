@@ -3,6 +3,7 @@
       <h1 class="logo-text">StockSphere</h1>
       <div v-if="!$route.meta.hideTabs" class="tabs">
         <router-link to="/dashboard">Dashboard</router-link>
+        <router-link to="/resources">Resources</router-link>
       </div>
     </nav>
   </template>

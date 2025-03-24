@@ -83,6 +83,7 @@ def get_resources(request):
 @require_http_methods(['POST'])
 @login_required
 def add_resource(request):
+    print("add resource view was hit")
     """
     Add a new product linked to the authenticated user.
     """
@@ -93,6 +94,29 @@ def add_resource(request):
         if serializer.is_valid():
             serializer.save(user=request.user)  # Assign product to logged-in user
             return JsonResponse(serializer.data, status=201)
+        print("Validation errors: ", serializer.errors)
         return JsonResponse(serializer.errors, status=400)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+@require_http_methods(['PUT'])
+@login_required
+def update_resource(request, resource_id):
+    try:
+        resource = get_object_or_404(Resource, id=resource_id, user=request.user)
+        data = json.loads(request.body)
+        serializer = ResourceSerializer(resource, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data)
+        return JsonResponse(serializer.errors, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_http_methods(['DELETE'])
+@login_required
+def delete_resource(request, resource_id):
+    resource = get_object_or_404(Resource, id=resource_id, user=request.user)
+    resource.delete()
+    return JsonResponse({'message': 'Deleted'}, status=204)
