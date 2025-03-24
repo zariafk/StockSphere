@@ -37,7 +37,7 @@ export const useAuthStore = defineStore('auth', {
         this.saveState()
         if (router) {
           await router.push({
-            name: 'home',
+            name: 'dashboard',
           })
         }
       } else {

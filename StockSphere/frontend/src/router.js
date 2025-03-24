@@ -3,6 +3,7 @@ import Landing from './pages/Landing.vue'
 import Dashboard from './pages/Dashboard.vue'
 import Login from './pages/Login.vue'
 import Register from './pages/Register.vue'
+import Resources from './pages/Resources.vue'
 
 const routes = [
   {
@@ -27,6 +28,11 @@ const routes = [
     component: Register,
     meta: { hideTabs: true },
   },
+  {
+    path: '/resources',
+    name: 'resources',
+    component: Resources,
+  }
 ]
 
 const router = createRouter({
