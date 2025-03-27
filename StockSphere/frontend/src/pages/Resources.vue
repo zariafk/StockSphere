@@ -31,11 +31,11 @@
                 </tbody>
             </table>
 
-            <button class="open-modal" @click="showModal = true">Add resource</button>
+            <button class="open-modal" @click="openAddResourceModal">Add resource</button>
 
             <div v-if="showModal" class="modal-overlay">
                 <div class="modal">
-                    <h2>Add resource</h2>
+                    <h2>{{ editMode ? "Edit Resource" : "Add resource" }}</h2>
 
                     <div class="grid-container">
                         <div class="form-group">
@@ -137,6 +137,11 @@
         editingId.value = null
         editMode.value = false
     }
+
+    const openAddResourceModal = () => {
+        resetForm();          // This sets editMode.value = false for sure
+        showModal.value = true;
+    };
 
     const deleteResource = async (id) => {
         await resourceStore.deleteResource(id)
