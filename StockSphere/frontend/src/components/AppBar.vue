@@ -5,6 +5,7 @@
         <router-link to="/dashboard">Dashboard</router-link>
         <router-link to="/resources">Resources</router-link>
         <router-link to="/products">Products</router-link>
+        <router-link to="/planning">Planning</router-link>
       </div>
     </nav>
   </template>
