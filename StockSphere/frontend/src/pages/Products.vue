@@ -6,11 +6,12 @@
       <table class="product-table">
         <thead>
           <tr>
-            <th>Name</th>
+            <th>Name</th> <!-- Updated column header order -->
+            <th>Resources</th> <!-- Updated column header order -->
             <th>Cost</th>
             <th>Sales Price</th>
             <th>Profit</th>
-            <th>Units in Stock</th>
+            <th>Units</th>
             <th>Notes</th>
             <th>Actions</th>
           </tr>
@@ -18,6 +19,14 @@
         <tbody>
           <tr v-for="product in productStore.products" :key="product.id">
             <td>{{ product.name }}</td>
+            <td>
+              <!-- Display resources used by the product -->
+              <ul>
+                <li v-for="(usage, index) in product.resource_usages" :key="index">
+                  {{ getResourceName(usage.resourceId) }} <!-- Display resource name -->
+                </li>
+              </ul>
+            </td>
             <td>{{ fmtGBP(product.cost) }}</td>
             <td>{{ fmtGBP(product.sales_price) }}</td>
             <td :class="{ positive: product.profit >= 0, negative: product.profit < 0 }">
@@ -94,12 +103,6 @@
           </table>
           <button class="add-row" @click="addResourceRow">Add Resource</button>
   
-          <!-- live cost / profit preview -->
-          <div class="cost-profit-preview">
-            <span>Cost: <strong>{{ fmtGBP(computedCost) }}</strong></span>
-            <span>Profit: <strong>{{ fmtGBP(computedProfit) }}</strong></span>
-          </div>
-  
           <div class="modal-buttons">
             <button class="submit-button" @click="saveProduct">
               {{ editMode ? "Save Changes" : "Add Product" }}
@@ -112,124 +115,180 @@
   </template>
   
   <script setup>
-  import { ref, computed, onMounted } from "vue";
-  import { PencilLine, Trash2 } from "lucide-vue-next";
-  import { useResourceStore } from "../store/resources";
-  import { useProductStore } from "../store/products";
-  
-  /* ---------- stores ---------- */
-  const resourceStore = useResourceStore();
-  const productStore = useProductStore();
-  
-  /* ---------- local state ---------- */
-  const showModal = ref(false);
-  const editMode = ref(false);
-  const editingId = ref(null);
-  
-  // product fields
-  const name = ref("");
-  const sales_price = ref(null);
-  const units_in_stock = ref(null);
-  const notes = ref("");
-  
-  // resources used by product (array of { resourceId, units })
-  const resourceUsages = ref([{ resourceId: "", units: null }]);
-  
-  /* ---------- formatters ---------- */
-  const gbp = new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  });
-  
-  const fmtGBP = (v) => (Number.isFinite(v) ? gbp.format(v) : "—");
-  
-  /* ---------- computed ---------- */
-  const computedCost = computed(() =>
-    resourceUsages.value.reduce((sum, usage) => {
-      const res = resourceStore.resources.find((r) => r.id === usage.resourceId);
-      if (!res || !usage.units) return sum;
-      const unitPrice = Number(res.unit_price) || 0;
-      return sum + unitPrice * usage.units;
-    }, 0)
-  );
-  
-  const computedProfit = computed(() => {
-    if (!sales_price.value) return 0;
-    return sales_price.value - computedCost.value;
-  });
-  
-  /* ---------- lifecycle ---------- */
-  onMounted(() => {
-    resourceStore.fetchResources();
-    productStore.fetchProducts();
-  });
-  
-  /* ---------- helper functions ---------- */
-  const addResourceRow = () => {
-    resourceUsages.value.push({ resourceId: "", units: null });
-  };
-  
-  const removeResourceRow = (index) => {
-    resourceUsages.value.splice(index, 1);
-  };
-  
-  const resetForm = () => {
-    name.value = "";
-    sales_price.value = null;
-    units_in_stock.value = null;
-    notes.value = "";
-    resourceUsages.value = [{ resourceId: "", units: null }];
-    editingId.value = null;
-    editMode.value = false;
-  };
-  
-  const openAddProductModal = () => {
-    resetForm();
-    showModal.value = true;
-  };
-  
-  const closeModal = () => {
-    showModal.value = false;
-  };
-  
-  /* ---------- CRUD ---------- */
-  const saveProduct = async () => {
-    const payload = {
-      name: name.value,
-      resource_usages: resourceUsages.value.filter((u) => u.resourceId && u.units),
-      cost: computedCost.value,
-      sales_price: parseFloat(sales_price.value),
-      profit: computedProfit.value,
-      units_in_stock: parseInt(units_in_stock.value),
-      notes: notes.value,
+    import { ref, computed, onMounted } from "vue";
+    import { PencilLine, Trash2 } from "lucide-vue-next";
+    import { useResourceStore } from "../store/resources";
+    import { useProductStore } from "../store/products";
+    
+    /* ---------- getCSRFToken helper ---------- */
+    const getCSRFToken = () => {
+      const cookies = document.cookie.split("; ");
+      for (const cookie of cookies) {
+        const [name, value] = cookie.split("=");
+        if (name === "csrftoken") return value;
+      }
+      return null;
     };
-  
-    if (editMode.value && editingId.value !== null) {
-      await productStore.updateProduct(editingId.value, payload);
-    } else {
-      await productStore.addProduct(payload);
-    }
-  
-    closeModal();
-    resetForm();
-  };
-  
-  const startEdit = (product) => {
-    name.value = product.name;
-    sales_price.value = product.sales_price;
-    units_in_stock.value = product.units_in_stock;
-    notes.value = product.notes;
-    resourceUsages.value = product.resource_usages.map((u) => ({ ...u }));
-    editingId.value = product.id;
-    editMode.value = true;
-    showModal.value = true;
-  };
-  
-  const deleteProduct = async (id) => {
-    await productStore.deleteProduct(id);
-  };
-  </script>
+    
+    /* ---------- stores ---------- */
+    const resourceStore = useResourceStore();
+    const productStore = useProductStore();
+    
+    /* ---------- local state ---------- */
+    const showModal = ref(false);
+    const editMode = ref(false);
+    const editingId = ref(null);
+    
+    // product fields
+    const name = ref("");
+    const sales_price = ref(null);
+    const units_in_stock = ref(null);
+    const notes = ref("");
+    
+    // resources used by product (array of { resourceId, units })
+    const resourceUsages = ref([{ resourceId: "", units: null }]);
+    
+    /* ---------- formatters ---------- */
+    const gbp = new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency: "GBP",
+      minimumFractionDigits: 2,
+    });
+    
+    const fmtGBP = (v) => (Number.isFinite(v) ? gbp.format(v) : "—");
+    
+    /* ---------- computed ---------- */
+    const computedCost = computed(() =>
+      resourceUsages.value.reduce((sum, usage) => {
+        const res = resourceStore.resources.find((r) => r.id === usage.resourceId);
+        if (!res || !usage.units) return sum;
+        const unitPrice = Number(res.unit_price) || 0;
+        return sum + unitPrice * usage.units;
+      }, 0)
+    );
+    
+    const computedProfit = computed(() => {
+      if (!sales_price.value) return 0;
+      return sales_price.value - computedCost.value;
+    });
+    
+    /* ---------- lifecycle ---------- */
+    onMounted(() => {
+      resourceStore.fetchResources();
+      productStore.fetchProducts();
+    });
+    
+    /* ---------- helper functions ---------- */
+    const addResourceRow = () => {
+      resourceUsages.value.push({ resourceId: "", units: null });
+    };
+    
+    const removeResourceRow = (index) => {
+      resourceUsages.value.splice(index, 1);
+    };
+    
+    const resetForm = () => {
+      name.value = "";
+      sales_price.value = null;
+      units_in_stock.value = null;
+      notes.value = "";
+      resourceUsages.value = [{ resourceId: "", units: null }];
+      editingId.value = null;
+      editMode.value = false;
+    };
+    
+    const openAddProductModal = () => {
+      resetForm();
+      showModal.value = true;
+    };
+    
+    const closeModal = () => {
+      showModal.value = false;
+    };
+    
+    /* ---------- CRUD ---------- */
+    const saveProduct = async () => {
+      const payload = {
+        name: name.value,
+        resource_usages: resourceUsages.value.filter((u) => u.resourceId && u.units),
+        cost: computedCost.value,
+        sales_price: parseFloat(sales_price.value),
+        profit: computedProfit.value,
+        units_in_stock: parseInt(units_in_stock.value),
+        notes: notes.value,
+      };
+    
+      try {
+        let response;
+    
+        if (editMode.value && editingId.value !== null) {
+          response = await fetch(`http://localhost:8000/api/products/${editingId.value}/update`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCSRFToken(),
+            },
+            credentials: "include",
+            body: JSON.stringify(payload),
+          });
+        } else {
+          response = await fetch("http://localhost:8000/api/products/add", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCSRFToken(),
+            },
+            credentials: "include",
+            body: JSON.stringify(payload),
+          });
+        }
+    
+        if (!response.ok) {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await response.json();
+            console.error("Product save failed:", errorData);
+            alert("Error: " + JSON.stringify(errorData));
+          } else {
+            const errorText = await response.text();
+            console.error("Non-JSON error:", errorText);
+            alert("Server returned an error:\n" + errorText.slice(0, 200));
+          }
+          return;
+        }
+    
+        await productStore.fetchProducts();
+        closeModal();
+        resetForm();
+      } catch (err) {
+        console.error("Unexpected error saving product:", err);
+        alert("Unexpected error occurred: " + err.message);
+      }
+    };
+    
+    const startEdit = (product) => {
+      name.value = product.name;
+      sales_price.value = product.sales_price;
+      units_in_stock.value = product.units_in_stock;
+      notes.value = product.notes;
+      resourceUsages.value = product.resource_usages.map((u) => ({ ...u }));
+      editingId.value = product.id;
+      editMode.value = true;
+      showModal.value = true;
+    };
+    
+    const deleteProduct = async (id) => {
+      await productStore.deleteProduct(id);
+    };
+    
+    /* ---------- Helper function to get resource name by ID ---------- */
+    const getResourceName = (resourceId) => {
+      const resource = resourceStore.resources.find((r) => r.id === resourceId);
+      return resource ? resource.name : "Unknown Resource";
+    };
+    </script>
+    
+    
   
   <style scoped>
   .products-container {
@@ -374,14 +433,6 @@
     color: #ff5555;
     cursor: pointer;
     font-size: 16px;
-  }
-  
-  .cost-profit-preview {
-    display: flex;
-    gap: 20px;
-    margin-top: 16px;
-    font-size: 15px;
-    font-weight: bold;
   }
   
   .modal-buttons {

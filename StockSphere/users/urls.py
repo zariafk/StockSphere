@@ -14,4 +14,10 @@ urlpatterns = [
     path('api/resources/add', views.add_resource, name='add_resource'),
     path('api/resources/<int:resource_id>/update', views.update_resource, name='update_resource'),
     path('api/resources/<int:resource_id>/delete', views.delete_resource, name='delete_resource'),
+
+    #PRODUCTS endpoints
+    path('api/products', views.get_products, name='get_products'),
+    path('api/products/add', views.add_product, name='add_product'),
+    path('api.products/<int:product_id>/update', views.update_product, name='update_product'),
+    path('api/products/<int:product_id>/delete', views.delete_product, name='delete_product'),
 ]

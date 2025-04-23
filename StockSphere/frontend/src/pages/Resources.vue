@@ -290,9 +290,10 @@
 
     .close-button {
         padding: 10px;
-        background-color: #dc3545;
+        background-color: #171a23;
         color: white;
-        border: none;
+        border-color: #d43de6;
+        border-width: 3px;
         cursor: pointer;
         border-radius: 5px;
         flex: 1;
