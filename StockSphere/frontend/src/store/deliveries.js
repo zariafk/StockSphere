@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
+import { useResourceStore } from './resources' // ✅ correct path
 
-export const useDeliveryStore = defineStore('delivery', {
+export const useDeliveriesStore = defineStore('deliveries', {
   state: () => ({
     deliveries: [],       // Current pending deliveries
     pastDeliveries: []    // Completed deliveries
@@ -27,11 +28,34 @@ export const useDeliveryStore = defineStore('delivery', {
       this.deliveries.push(delivery)
     },
 
-    // Mark a delivery as completed
     markAsCompleted(index) {
-      const [completed] = this.deliveries.splice(index, 1)
-      this.pastDeliveries.push(completed)
-    },
+        const [completed] = this.deliveries.splice(index, 1)
+      
+        completed.resources = completed.resources.map(res => {
+          // Find full resource info from your store (must be globally available)
+          const resourceStore = useResourceStore()
+          const resource = resourceStore.resources.find(r => r.id === res.resourceId)
+      
+          const unitsPerPack = resource?.units_per_pack ?? res.unitsPerPack ?? 1
+          const unitPrice = resource?.unit_price ?? res.unitPrice ?? 0
+          const totalUnits = res.cases * unitsPerPack
+          const cost = totalUnits * unitPrice
+      
+          return {
+            ...res,
+            unitsPerPack,
+            unitPrice,
+            totalUnits,
+            cost,
+          }
+        })
+      
+        completed.totalCost = completed.resources.reduce((sum, r) => sum + r.cost, 0)
+      
+        this.pastDeliveries.push(completed)
+      },
+      
+      
 
     // Delete a delivery
     deleteDelivery(index) {
@@ -47,6 +71,9 @@ export const useDeliveryStore = defineStore('delivery', {
     resetDeliveries() {
       this.deliveries = []
       this.pastDeliveries = []
-    }
+    },
+    deletePastDelivery(index) {
+        this.pastDeliveries.splice(index, 1)
+      }      
   }
 })

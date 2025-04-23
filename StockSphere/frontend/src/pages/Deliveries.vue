@@ -2,10 +2,8 @@
     <div class="deliveries-container">
       <h1>Deliveries <button class="add-btn" @click="openAddModal">+</button></h1>
   
-      <!-- Past Deliveries Button -->
       <button class="modal-button" @click="showPastModal = true">Past Deliveries</button>
   
-      <!-- Deliveries Table -->
       <table class="deliveries-table">
         <thead>
           <tr>
@@ -25,20 +23,10 @@
             <td>{{ index + 1 }}</td>
             <td>{{ delivery.from }}</td>
             <td>{{ fmtGBP(calculateTotal(delivery.resources)) }}</td>
-            <td>
-              <div v-for="res in delivery.resources" :key="res.resourceId">{{ getResourceName(res.resourceId) }}</div>
-            </td>
-            <td>
-              <div v-for="res in delivery.resources" :key="res.resourceId">{{ res.cases }}</div>
-            </td>
-            <td>
-              <div v-for="res in delivery.resources" :key="res.resourceId">{{ getUnits(res.resourceId, res.cases) }}</div>
-            </td>
-            <td>
-              <div v-for="res in delivery.resources" :key="res.resourceId">
-                {{ fmtGBP(getCost(res.resourceId, res.cases)) }}
-              </div>
-            </td>
+            <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ getResourceName(res.resourceId) }}</div></td>
+            <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ res.cases }}</div></td>
+            <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ getUnits(res.resourceId, res.cases) }}</div></td>
+            <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ fmtGBP(getCost(res.resourceId, res.cases)) }}</div></td>
             <td>{{ delivery.notes }}</td>
             <td>
               <PencilLine class="icon-button edit" @click="startEdit(index)" />
@@ -69,17 +57,14 @@
               <div v-for="(res, idx) in resourceUsages" :key="idx" class="resource-row">
                 <select v-model="res.resourceId">
                   <option disabled value="">-- Select Resource --</option>
-                  <option v-for="r in resourceStore.resources" :key="r.id" :value="r.id">
-                    {{ r.name }}
-                  </option>
+                  <option v-for="r in resourceStore.resources" :key="r.id" :value="r.id">{{ r.name }}</option>
                 </select>
-                <input type="number" v-model.number="res.cases" placeholder="Cases" min="1" />
+                <input type="number" v-model.number="res.cases" placeholder="Packs" min="1" />
                 <button class="remove-row" @click="removeResourceRow(idx)">✕</button>
               </div>
               <button class="add-row" @click="addResourceRow">Add Resource</button>
             </div>
           </div>
-  
           <div class="modal-buttons">
             <button class="submit-button" @click="saveDelivery">{{ editMode ? "Save" : "Add" }}</button>
             <button class="close-button" @click="closeModal">Cancel</button>
@@ -91,11 +76,32 @@
       <div v-if="showPastModal" class="modal-overlay">
         <div class="modal">
           <h2>Past Deliveries</h2>
-          <ul>
-            <li v-for="(d, i) in deliveries.filter(d => d.completed)" :key="i">
-              ✅ {{ d.from }} — {{ fmtGBP(calculateTotal(d.resources)) }}
-            </li>
-          </ul>
+          <table class="deliveries-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>From</th>
+                <th>Total Cost</th>
+                <th>Resources</th>
+                <th>Packs</th>
+                <th>Units</th>
+                <th>Cost</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(delivery, index) in deliveriesStore.pastDeliveries" :key="index">
+                <td>{{ index + 1 }}</td>
+                <td>{{ delivery.from }}</td>
+                <td>{{ fmtGBP(delivery.totalCost) }}</td>
+                <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ getResourceName(res.resourceId) }}</div></td>
+                <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ res.cases }}</div></td>
+                <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ res.totalUnits }}</div></td>
+                <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ fmtGBP(res.cost) }}</div></td>
+                <td>{{ delivery.notes }}</td>
+              </tr>
+            </tbody>
+          </table>
           <div class="modal-buttons">
             <button class="close-button" @click="showPastModal = false">Close</button>
           </div>
@@ -103,6 +109,7 @@
       </div>
     </div>
   </template>
+  
   
   <script setup>
     import { ref, onMounted } from 'vue'
@@ -305,12 +312,49 @@
     border: 2px solid #b43de6;
     color: white;
   }
-  .remove-row {
-    background: none;
-    border: none;
-    color: #ff5555;
-    cursor: pointer;
-    font-size: 16px;
-  }
+  .resource-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.resource-row select,
+.resource-row input {
+  height: 38px;
+  padding: 6px 10px;
+  background-color: #2b2e3d;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.resource-row select {
+  flex: 2;
+}
+
+.resource-row input {
+  flex: 1;
+}
+
+.remove-row {
+  height: 38px;
+  width: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2b2e3d;
+  border: none;
+  color: #ff4d4d;
+  font-size: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.remove-row:hover {
+  background: #3b3e4d;
+}
   </style>
   
