@@ -58,12 +58,12 @@
   
             <div class="form-group">
               <label class="column-headings">Sales Price</label>
-              <input v-model.number="sales_price" type="number" placeholder="e.g. 19.99" />
+              <input v-model.number="sales_price" type="number" placeholder="Sales Price" />
             </div>
   
             <div class="form-group">
               <label class="column-headings">Units in Stock</label>
-              <input v-model.number="units_in_stock" type="number" placeholder="0" />
+              <input v-model.number="units_in_stock" type="number" placeholder="Units Available" />
             </div>
   
             <div class="form-group">
@@ -324,7 +324,13 @@
   .product-table tr:hover {
     background-color: #2e3344;
   }
-  
+
+  ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+  }
+
   .icon-button {
     cursor: pointer;
     width: 18px;
@@ -420,7 +426,7 @@
   .add-row {
     margin-top: 10px;
     padding: 6px 12px;
-    background-color: #4caf50;
+    background-color: #d43de6;
     border: none;
     color: #fff;
     border-radius: 4px;
@@ -443,7 +449,7 @@
   
   .submit-button {
     padding: 10px;
-    background-color: #3b82f6;
+    background-color: #d43de6;
     color: white;
     border: none;
     cursor: pointer;
@@ -454,9 +460,10 @@
   
   .close-button {
     padding: 10px;
-    background-color: #dc3545;
+    background-color: #171A23;
     color: white;
-    border: none;
+    border-color: #d43de6;
+    border-width: 3px;
     cursor: pointer;
     border-radius: 5px;
     flex: 1;
