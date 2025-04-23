@@ -181,12 +181,12 @@
     .resource-table {
         width: 100%;
         margin-top: 20px;
-    border-collapse: collapse;
-    background-color: #1e1e2e;
-    color: #eaeaea;
-    border-radius: 8px;
-    overflow: hidden;
-    font-size: 14px;
+        border-collapse: collapse;
+        background-color: #1e1e2e;
+        color: #eaeaea;
+        border-radius: 8px;
+        overflow: hidden;
+        font-size: 14px;
     }
 
     .resource-table th,
@@ -221,6 +221,23 @@
         display: flex;
         flex-direction: column;
     }
+
+    .open-modal {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #b43de6;   /* pick your colour */
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }   
+
+    .open-modal:hover {
+        background-color: #9031b8;   /* optional hover shade */
+    }
+
+   
 
     .modal-overlay {
         position: fixed;
@@ -262,7 +279,7 @@
 
     .submit-button {
         padding: 10px;
-        background-color: #28a745;
+        background-color: #d43de6;
         color: white;
         border: none;
         cursor: pointer;
@@ -273,9 +290,10 @@
 
     .close-button {
         padding: 10px;
-        background-color: #dc3545;
+        background-color: #171a23;
         color: white;
-        border: none;
+        border-color: #d43de6;
+        border-width: 3px;
         cursor: pointer;
         border-radius: 5px;
         flex: 1;

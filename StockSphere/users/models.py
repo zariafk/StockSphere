@@ -24,3 +24,17 @@ class Resource(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class Product(models.Model):
+    name = models.CharField(max_length=255)
+    cost = models.FloatField()
+    sales_price = models.FloatField()
+    profit = models.FloatField()
+    units_in_stock = models.IntegerField()
+    notes = models.TextField(null=True, blank=True)
+    resource_usages = models.JSONField(default=list)  # Store the resource usage as JSON
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Each product is linked to a user
+
+    def __str__(self):
+        return self.name

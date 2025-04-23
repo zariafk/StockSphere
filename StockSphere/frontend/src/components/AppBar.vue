@@ -4,6 +4,7 @@
       <div v-if="!$route.meta.hideTabs" class="tabs">
         <router-link to="/dashboard">Dashboard</router-link>
         <router-link to="/resources">Resources</router-link>
+        <router-link to="/products">Products</router-link>
       </div>
     </nav>
   </template>
