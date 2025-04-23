@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard.vue'
 import Login from './pages/Login.vue'
 import Register from './pages/Register.vue'
 import Resources from './pages/Resources.vue'
+import Products from './pages/Products.vue'
 
 const routes = [
   {
@@ -32,6 +33,11 @@ const routes = [
     path: '/resources',
     name: 'resources',
     component: Resources,
+  },
+  {
+    path: '/products',
+    name: 'products',
+    component: Products,
   }
 ]
 
