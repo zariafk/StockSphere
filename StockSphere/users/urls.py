@@ -20,4 +20,10 @@ urlpatterns = [
     path('api/products/add', views.add_product, name='add_product'),
     path('api/products/<int:product_id>/update', views.update_product, name='update_product'),
     path('api/products/<int:product_id>/delete', views.delete_product, name='delete_product'),
+
+    #DELIVERIES endpoints
+    path('api/deliveries', views.get_deliveries, name='get_deliveries'),
+    path('api/deliveries/add', views.add_delivery, name='add_delivery'),
+    path('api/deliveries/<int:deliver_id>/update', views.update_delivery, name='update_delivery').
+    path('api/deliveries/<int:delivery_id>/delete', views.delete_delivery, name='delete_delivery'),
 ]

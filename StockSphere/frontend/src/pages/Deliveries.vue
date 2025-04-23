@@ -105,105 +105,113 @@
   </template>
   
   <script setup>
-  import { ref, onMounted } from 'vue'
-  import { useResourceStore } from '../store/resources'
-  import { PencilLine, Trash2 } from 'lucide-vue-next'
-  
-  const resourceStore = useResourceStore()
-  onMounted(() => resourceStore.fetchResources())
-  
-  const deliveries = ref([])
-  const showModal = ref(false)
-  const showPastModal = ref(false)
-  const editMode = ref(false)
-  const editingIndex = ref(null)
-  
-  const from = ref('')
-  const notes = ref('')
-  const resourceUsages = ref([{ resourceId: '', cases: 1 }])
-  
-  const addResourceRow = () => resourceUsages.value.push({ resourceId: '', cases: 1 })
-  const removeResourceRow = (i) => resourceUsages.value.splice(i, 1)
-  
-  const resetForm = () => {
-    from.value = ''
-    notes.value = ''
-    resourceUsages.value = [{ resourceId: '', cases: 1 }]
-    editMode.value = false
-    editingIndex.value = null
-  }
-  
-  const openAddModal = () => {
-    resetForm()
-    showModal.value = true
-  }
-  
-  const closeModal = () => {
-    showModal.value = false
-    resetForm()
-  }
-  
-  const getResourceName = (id) => {
-    const res = resourceStore.resources.find(r => r.id === id)
-    return res ? res.name : 'Unknown'
-  }
-  
-  const getUnits = (id, cases) => {
-    const res = resourceStore.resources.find(r => r.id === id)
-    return res ? res.units_per_pack * cases : 0
-  }
-  
-  const getCost = (id, cases) => {
-    const res = resourceStore.resources.find(r => r.id === id)
-    return res ? res.unit_price * res.units_per_pack * cases : 0
-  }
-  
-  const calculateTotal = (items) => {
-    return items.reduce((sum, r) => sum + getCost(r.resourceId, r.cases), 0)
-  }
-  
-  const fmtGBP = (val) => {
-    return new Intl.NumberFormat("en-GB", {
-      style: "currency",
-      currency: "GBP"
-    }).format(val)
-  }
-  
-  const saveDelivery = () => {
-    const payload = {
-      from: from.value,
-      notes: notes.value,
-      resources: resourceUsages.value.filter(r => r.resourceId && r.cases),
-      completed: false
+    import { ref, onMounted } from 'vue'
+    import { useResourceStore } from '../store/resources'
+    import { useDeliveriesStore } from '../store/deliveries'
+    import { PencilLine, Trash2 } from 'lucide-vue-next'
+    
+    const resourceStore = useResourceStore()
+    const deliveriesStore = useDeliveriesStore()
+    
+    onMounted(() => {
+      resourceStore.fetchResources()
+    })
+    
+    // References to store state
+    const deliveries = deliveriesStore.deliveries
+    
+    const showModal = ref(false)
+    const showPastModal = ref(false)
+    const editMode = ref(false)
+    const editingIndex = ref(null)
+    
+    const from = ref('')
+    const notes = ref('')
+    const resourceUsages = ref([{ resourceId: '', cases: 1 }])
+    
+    const addResourceRow = () => resourceUsages.value.push({ resourceId: '', cases: 1 })
+    const removeResourceRow = (i) => resourceUsages.value.splice(i, 1)
+    
+    const resetForm = () => {
+      from.value = ''
+      notes.value = ''
+      resourceUsages.value = [{ resourceId: '', cases: 1 }]
+      editMode.value = false
+      editingIndex.value = null
     }
-  
-    if (editMode.value) {
-      deliveries.value[editingIndex.value] = payload
-    } else {
-      deliveries.value.push(payload)
+    
+    const openAddModal = () => {
+      resetForm()
+      showModal.value = true
     }
-  
-    closeModal()
-  }
-  
-  const deleteDelivery = (i) => {
-    deliveries.value.splice(i, 1)
-  }
-  
-  const startEdit = (i) => {
-    const d = deliveries.value[i]
-    from.value = d.from
-    notes.value = d.notes
-    resourceUsages.value = JSON.parse(JSON.stringify(d.resources))
-    editingIndex.value = i
-    editMode.value = true
-    showModal.value = true
-  }
-  
-  const markCompleted = (i) => {
-    deliveries.value[i].completed = true
-  }
-  </script>
+    
+    const closeModal = () => {
+      showModal.value = false
+      resetForm()
+    }
+    
+    const getResourceName = (id) => {
+      const res = resourceStore.resources.find(r => r.id === id)
+      return res ? res.name : 'Unknown'
+    }
+    
+    const getUnits = (id, cases) => {
+      const res = resourceStore.resources.find(r => r.id === id)
+      return res ? res.units_per_pack * cases : 0
+    }
+    
+    const getCost = (id, cases) => {
+      const res = resourceStore.resources.find(r => r.id === id)
+      return res ? res.unit_price * res.units_per_pack * cases : 0
+    }
+    
+    const calculateTotal = (items) => {
+      return items.reduce((sum, r) => sum + getCost(r.resourceId, r.cases), 0)
+    }
+    
+    const fmtGBP = (val) => {
+      return new Intl.NumberFormat("en-GB", {
+        style: "currency",
+        currency: "GBP"
+      }).format(val)
+    }
+    
+    const saveDelivery = () => {
+      const payload = {
+        from: from.value,
+        notes: notes.value,
+        resources: resourceUsages.value.filter(r => r.resourceId && r.cases),
+        completed: false
+      }
+    
+      if (editMode.value && editingIndex.value !== null) {
+        deliveriesStore.updateDelivery(editingIndex.value, payload)
+      } else {
+        deliveriesStore.addDelivery(payload)
+      }
+    
+      closeModal()
+    }
+    
+    const deleteDelivery = (i) => {
+      deliveriesStore.deleteDelivery(i)
+    }
+    
+    const startEdit = (i) => {
+      const d = deliveries.value[i]
+      from.value = d.from
+      notes.value = d.notes
+      resourceUsages.value = JSON.parse(JSON.stringify(d.resources))
+      editingIndex.value = i
+      editMode.value = true
+      showModal.value = true
+    }
+    
+    const markCompleted = (i) => {
+      deliveriesStore.markAsCompleted(i)
+    }
+    </script>
+    
   
   <style scoped>
   /* Use your familiar style structure like Planning.vue */
