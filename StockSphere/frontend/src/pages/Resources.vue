@@ -279,7 +279,7 @@
 
     .submit-button {
         padding: 10px;
-        background-color: #d43de6;
+        background-color: #b43de6;
         color: white;
         border: none;
         cursor: pointer;

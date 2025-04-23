@@ -426,7 +426,7 @@
   .add-row {
     margin-top: 10px;
     padding: 6px 12px;
-    background-color: #d43de6;
+    background-color: #b43de6;
     border: none;
     color: #fff;
     border-radius: 4px;
