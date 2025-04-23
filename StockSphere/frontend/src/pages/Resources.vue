@@ -17,9 +17,9 @@
                 <tbody>
                     <tr v-for="resource in resourceStore.resources" :key="resource.id">
                         <td>{{ resource.name }}</td>
-                        <td>${{ Number(resource.price_per_pack).toFixed(2) }}</td>
+                        <td>£{{ Number(resource.price_per_pack).toFixed(2) }}</td>
                         <td>{{ resource.units_per_pack }}</td>
-                        <td>${{ Number(resource.unit_price).toFixed(2) }}</td>
+                        <td>£{{ Number(resource.unit_price).toFixed(2) }}</td>
                         <td>{{ resource.available_units }}</td>
                         <td>{{ resource.arriving_units }}</td>
                         <td>{{ resource.notes }}</td>
