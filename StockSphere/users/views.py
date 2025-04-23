@@ -10,8 +10,8 @@ from .forms import CreateUserForm
 
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Resource
-from .serializers import ResourceSerializer
+from .models import Resource, Product
+from .serializers import ResourceSerializer, ProductSerializer
 
 # AUTHENTICATION
 @ensure_csrf_cookie
@@ -68,7 +68,7 @@ def register(request):
         return JsonResponse({'error': errors}, status=400)
     
 
-# PRODUCTS
+# RESOURCES
 @require_http_methods(['GET'])
 @login_required
 def get_resources(request):
@@ -120,3 +120,60 @@ def delete_resource(request, resource_id):
     resource = get_object_or_404(Resource, id=resource_id, user=request.user)
     resource.delete()
     return JsonResponse({'message': 'Deleted'}, status=204)
+
+
+# Fetch products
+@require_http_methods(['GET'])
+@login_required
+def get_products(request):
+    """
+    Fetch products that belong to the authenticated user.
+    """
+    products = Product.objects.filter(user=request.user)  # Fetch products related to the logged-in user
+    serializer = ProductSerializer(products, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
+# Add a new product
+@require_http_methods(['POST'])
+@login_required
+def add_product(request):
+    """
+    Add a new product linked to the authenticated user.
+    """
+    try:
+        data = json.loads(request.body)
+        serializer = ProductSerializer(data=data)
+
+        if serializer.is_valid():
+            serializer.save(user=request.user)  # Link the product to the logged-in user
+            return JsonResponse(serializer.data, status=201)
+        return JsonResponse(serializer.errors, status=400)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+# Update a product
+@require_http_methods(['PUT'])
+@login_required
+def update_product(request, product_id):
+    try:
+        product = get_object_or_404(Product, id=product_id, user=request.user)
+        data = json.loads(request.body)
+        serializer = ProductSerializer(product, data=data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data)
+        return JsonResponse(serializer.errors, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+# Delete a product
+@require_http_methods(['DELETE'])
+@login_required
+def delete_product(request, product_id):
+    try:
+        product = get_object_or_404(Product, id=product_id, user=request.user)
+        product.delete()
+        return JsonResponse({'message': 'Deleted successfully'}, status=204)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
