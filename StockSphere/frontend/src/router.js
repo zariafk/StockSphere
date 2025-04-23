@@ -6,6 +6,7 @@ import Register from './pages/Register.vue'
 import Resources from './pages/Resources.vue'
 import Products from './pages/Products.vue'
 import Planning from './pages/Planning.vue'
+import Deliveries from './pages/Deliveries.vue'
 
 const routes = [
   {
@@ -44,6 +45,11 @@ const routes = [
     path: '/planning',
     name: 'planning',
     component: Planning,
+  },
+  {
+    path: '/deliveries',
+    name: 'deliveries',
+    component: Deliveries,
   }
 ]
 
