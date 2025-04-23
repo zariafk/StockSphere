@@ -10,8 +10,8 @@ from .forms import CreateUserForm
 
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Resource, Product
-from .serializers import ResourceSerializer, ProductSerializer
+from .models import Resource, Product, Delivery
+from .serializers import ResourceSerializer, ProductSerializer, DeliverySerializer
 
 # AUTHENTICATION
 @ensure_csrf_cookie
@@ -174,6 +174,55 @@ def delete_product(request, product_id):
     try:
         product = get_object_or_404(Product, id=product_id, user=request.user)
         product.delete()
+        return JsonResponse({'message': 'Deleted successfully'}, status=204)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+
+# Fetch deliveries
+@require_http_methods(['GET'])
+@login_required
+def get_deliveries(request):
+    deliveries = Delivery.objects.filter(user=request.user).order_by('-id')
+    serializer = DeliverySerializer(deliveries, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
+# Add a delivery
+@require_http_methods(['POST'])
+@login_required
+def add_delivery(request):
+    try:
+        data = json.loads(request.body)
+        serializer = DeliverySerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return JsonResponse(serializer.data, status=201)
+        return JsonResponse(serializer.errors, status=400)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+# Update a delivery
+@require_http_methods(['PUT'])
+@login_required
+def update_delivery(request, delivery_id):
+    try:
+        delivery = get_object_or_404(Delivery, id=delivery_id, user=request.user)
+        data = json.loads(request.body)
+        serializer = DeliverySerializer(delivery, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data)
+        return JsonResponse(serializer.errors, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+# Delete a delivery
+@require_http_methods(['DELETE'])
+@login_required
+def delete_delivery(request, delivery_id):
+    try:
+        delivery = get_object_or_404(Delivery, id=delivery_id, user=request.user)
+        delivery.delete()
         return JsonResponse({'message': 'Deleted successfully'}, status=204)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

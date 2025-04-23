@@ -38,3 +38,27 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+    
+class Delivery(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    from_location = models.CharField(max_length=255)
+    notes = models.TextField(blank=True, null=True)
+    completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Delivery from {self.from_location} on {self.created_at.strftime('%Y-%m-%d')}"
+
+class DeliveryResource(models.Model):
+    delivery = models.ForeignKey(Delivery, related_name='resources', on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    cases = models.PositiveIntegerField()
+
+    def total_units(self):
+        return self.cases * self.resource.units_per_pack
+
+    def total_cost(self):
+        return self.total_units() * self.resource.unit_price
+
+    def __str__(self):
+        return f"{self.cases}x {self.resource.name} in {self.delivery}"
