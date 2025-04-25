@@ -292,6 +292,10 @@
     display: flex;
     flex-direction: column;
   }
+  .form-group input {
+    width: 100%;
+    box-sizing: border-box;
+  }
   .modal-buttons {
     margin-top: 20px;
     display: flex;
