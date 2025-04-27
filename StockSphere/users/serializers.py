@@ -49,17 +49,19 @@ class DeliverySerializer(serializers.ModelSerializer):
             DeliveryResource.objects.create(delivery=delivery, **resource_data)
         return delivery
 
-    def update(self, instance, validated_data):
-        resources_data = validated_data.pop('resources', None)
-        instance.from_location = validated_data.get('from_location', instance.from_location)
-        instance.notes = validated_data.get('notes', instance.notes)
-        instance.completed = validated_data.get('completed', instance.completed)
-        instance.save()
+def update(self, instance, validated_data):
+    resources_data = validated_data.pop('resources', None)
 
-        if resources_data is not None:
-            instance.resources.all().delete()
-            for resource_data in resources_data:
-                DeliveryResource.objects.create(delivery=instance, **resource_data)
+    instance.from_location = validated_data.get('from_location', instance.from_location)
+    instance.notes = validated_data.get('notes', instance.notes)
+    instance.completed = validated_data.get('completed', instance.completed)
+    instance.save()
 
-        return instance
+    # 🛠 Only update resources if new ones were actually provided
+    if resources_data is not None:
+        instance.resources.all().delete()
+        for resource_data in resources_data:
+            DeliveryResource.objects.create(delivery=instance, **resource_data)
+
+    return instance
 

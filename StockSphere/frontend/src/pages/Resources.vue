@@ -57,7 +57,7 @@
                             <label class="column-headings">Available Units</label>
                             <input v-model="available_units" placeholder="Available Units" type="number" />
                         </div>
-        
+
                         <div class="form-group">
                             <label class="column-headings">Notes</label>
                             <textarea v-model="notes" placeholder="Notes"></textarea>
@@ -72,102 +72,77 @@
             </div>
     </div>
 </template>
-    
+
 <script setup>
-    import { onMounted, ref } from "vue";
-    import { useResourceStore } from "../store/resources";
-    import { PencilLine, Trash2 } from 'lucide-vue-next';
+import { onMounted, ref } from "vue";
+import { useResourceStore } from "../store/resources";
+import { PencilLine, Trash2 } from 'lucide-vue-next';
 
-    const resourceStore = useResourceStore();
-    const showModal = ref(false);
+const resourceStore = useResourceStore();
+const showModal = ref(false);
 
-    const name = ref("");
-    const price_per_pack = ref("");
-    const units_per_pack = ref("");
-    const available_units = ref("");
-    const arriving_units = ref("");
-    const notes = ref("");
+const name = ref("");
+const price_per_pack = ref("");
+const units_per_pack = ref("");
+const available_units = ref("");
+const notes = ref("");
 
-    const editMode = ref(false)
-    const editingId = ref(null)
-        
-    onMounted(() => {
-        resourceStore.fetchResources();
-    });
+const editMode = ref(false)
+const editingId = ref(null)
+    
+onMounted(() => {
+    resourceStore.fetchResources();
+});
 
-    const saveResource = async () => {
-        const payload = {
-            name: name.value,
-            price_per_pack: parseFloat(price_per_pack.value),
-            units_per_pack: parseInt(units_per_pack.value),
-            available_units: parseInt(available_units.value),
-            arriving_units: parseInt(arriving_units.value),
-            notes: notes.value,
-        }
-
-        if (editMode.value && editingId.value !== null) {
-            await resourceStore.updateResource(editingId.value, payload)
-        } else {
-            await resourceStore.addResource(payload)
-        }
-
-        resetForm()
-        showModal.value = false
-    }
-
-    const startEdit = (resource) => {
-        name.value = resource.name
-        price_per_pack.value = resource.price_per_pack
-        units_per_pack.value = resource.units_per_pack
-        available_units.value = resource.available_units
-        arriving_units.value = resource.arriving_units
-        notes.value = resource.notes
-        editingId.value = resource.id
-        editMode.value = true
-        showModal.value = true
-    }
-
-    const resetForm = () => {
-        name.value = ""
-        price_per_pack.value = ""
-        units_per_pack.value = ""
-        available_units.value = ""
-        arriving_units.value = ""
-        notes.value = ""
-        editingId.value = null
-        editMode.value = false
-    }
-
-    const openAddResourceModal = () => {
-        resetForm();          // This sets editMode.value = false for sure
-        showModal.value = true;
-    };
-
-    const deleteResource = async (id) => {
-        await resourceStore.deleteResource(id)
-    }
-        
-    /*
-    const addResource = async () => {
-    await resourceStore.addResource({
+const saveResource = async () => {
+    const payload = {
         name: name.value,
         price_per_pack: parseFloat(price_per_pack.value),
         units_per_pack: parseInt(units_per_pack.value),
         available_units: parseInt(available_units.value),
-        arriving_units: parseInt(arriving_units.value),
-        notes: notes.value
-    });
-    
-        
-        name.value = "";
-        price_per_pack.value = "";
-        units_per_pack.value = "";
-        available_units.value = "";
-        arriving_units.value = "";
-        notes.value = "";
+        arriving_units: editMode.value ? undefined : 0,
+        notes: notes.value,
+    }
 
-        showModal.value = false;
-    };*/
+    if (editMode.value && editingId.value !== null) {
+        await resourceStore.updateResource(editingId.value, payload)
+    } else {
+        await resourceStore.addResource(payload)
+    }
+
+    resetForm()
+    showModal.value = false
+}
+
+const startEdit = (resource) => {
+    name.value = resource.name
+    price_per_pack.value = resource.price_per_pack
+    units_per_pack.value = resource.units_per_pack
+    available_units.value = resource.available_units
+    notes.value = resource.notes
+    editingId.value = resource.id
+    editMode.value = true
+    showModal.value = true
+}
+
+const resetForm = () => {
+    name.value = ""
+    price_per_pack.value = ""
+    units_per_pack.value = ""
+    available_units.value = ""
+    notes.value = ""
+    editingId.value = null
+    editMode.value = false
+}
+
+const openAddResourceModal = () => {
+    resetForm();
+    showModal.value = true;
+};
+
+const deleteResource = async (id) => {
+    await resourceStore.deleteResource(id)
+}
 </script>
 
 <style scoped>

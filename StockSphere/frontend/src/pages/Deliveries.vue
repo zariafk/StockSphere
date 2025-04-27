@@ -3,7 +3,7 @@
       <h1>Deliveries <button class="add-btn" @click="openAddModal">+</button></h1>
   
       <button class="modal-button" @click="showPastModal = true">Past Deliveries</button>
-  
+    
       <table class="deliveries-table">
         <thead>
           <tr>
@@ -19,7 +19,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(delivery, index) in deliveries.filter(d => !d.completed)" :key="index">
+          <tr v-for="(delivery, index) in deliveriesStore.deliveries.filter(d => !d.completed)" :key="index">
             <td>{{ index + 1 }}</td>
             <td>{{ delivery.from }}</td>
             <td>{{ fmtGBP(calculateTotal(delivery.resources)) }}</td>
@@ -120,12 +120,10 @@
     const resourceStore = useResourceStore()
     const deliveriesStore = useDeliveriesStore()
     
-    onMounted(() => {
-      resourceStore.fetchResources()
+    onMounted(async () => {
+      await resourceStore.fetchResources();
+      await deliveriesStore.fetchDeliveries();
     })
-    
-    // References to store state
-    const deliveries = deliveriesStore.deliveries
     
     const showModal = ref(false)
     const showPastModal = ref(false)
@@ -183,30 +181,37 @@
       }).format(val)
     }
     
-    const saveDelivery = () => {
+    const saveDelivery = async () => {
       const payload = {
-        from: from.value,
+        from_location: from.value,
         notes: notes.value,
-        resources: resourceUsages.value.filter(r => r.resourceId && r.cases),
+        resources: resourceUsages.value
+          .filter(r => r.resourceId && r.cases)
+          .map(r => ({
+            resource: r.resourceId,
+            cases: r.cases
+          })),
         completed: false
       }
     
       if (editMode.value && editingIndex.value !== null) {
         deliveriesStore.updateDelivery(editingIndex.value, payload)
       } else {
-        deliveriesStore.addDelivery(payload)
+        await deliveriesStore.addDelivery(payload)
+        await deliveriesStore.fetchDeliveries()
       }
     
       closeModal()
     }
     
-    const deleteDelivery = (i) => {
-      deliveriesStore.deleteDelivery(i)
+    const deleteDelivery = async (i) => {
+      await deliveriesStore.deleteDelivery(i)
+      await deliveriesStore.fetchDeliveries()
     }
     
     const startEdit = (i) => {
-      const d = deliveries.value[i]
-      from.value = d.from
+      const d = deliveriesStore.deliveries[i]
+      from.value = d.from_location
       notes.value = d.notes
       resourceUsages.value = JSON.parse(JSON.stringify(d.resources))
       editingIndex.value = i
@@ -214,10 +219,13 @@
       showModal.value = true
     }
     
-    const markCompleted = (i) => {
-      deliveriesStore.markAsCompleted(i)
+    const markCompleted = async (i) => {
+      await deliveriesStore.markAsCompleted(i)
+      await resourceStore.fetchResources()
     }
     </script>
+    
+    
     
   
   <style scoped>

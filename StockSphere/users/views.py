@@ -10,7 +10,7 @@ from .forms import CreateUserForm
 
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Resource, Product, Delivery
+from .models import Resource, Product, Delivery, DeliveryResource
 from .serializers import ResourceSerializer, ProductSerializer, DeliverySerializer
 
 # AUTHENTICATION
@@ -201,20 +201,40 @@ def add_delivery(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
-# Update a delivery
 @require_http_methods(['PUT'])
 @login_required
 def update_delivery(request, delivery_id):
     try:
         delivery = get_object_or_404(Delivery, id=delivery_id, user=request.user)
         data = json.loads(request.body)
-        serializer = DeliverySerializer(delivery, data=data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data)
-        return JsonResponse(serializer.errors, status=400)
+
+        # Only update simple fields manually
+        delivery.from_location = data.get('from_location', delivery.from_location)
+        delivery.notes = data.get('notes', delivery.notes)
+        delivery.completed = data.get('completed', delivery.completed)
+        delivery.save()
+
+        # 🛠 Handle resources separately
+        if 'resources' in data:
+            delivery.resources.all().delete()
+            for res_data in data['resources']:
+                DeliveryResource.objects.create(
+                    delivery=delivery,
+                    resource_id=res_data['resource'],
+                    cases=res_data['cases']
+                )
+
+        # ✅ Re-serialize and return updated delivery
+        updated_delivery_data = DeliverySerializer(delivery).data
+
+        return JsonResponse(updated_delivery_data, status=200)
+
     except Exception as e:
+        print('Error in update_delivery:', e)
         return JsonResponse({'error': str(e)}, status=500)
+
+
+
 
 # Delete a delivery
 @require_http_methods(['DELETE'])
