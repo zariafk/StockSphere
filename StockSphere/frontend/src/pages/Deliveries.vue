@@ -3,7 +3,7 @@
       <h1>Deliveries <button class="add-btn" @click="openAddModal">+</button></h1>
   
       <button class="modal-button" @click="showPastModal = true">Past Deliveries</button>
-    
+  
       <table class="deliveries-table">
         <thead>
           <tr>
@@ -19,7 +19,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(delivery, index) in deliveriesStore.deliveries.filter(d => !d.completed)" :key="index">
+          <tr v-for="(delivery, index) in deliveriesStore.deliveries" :key="index">
             <td>{{ index + 1 }}</td>
             <td>{{ delivery.from }}</td>
             <td>{{ fmtGBP(calculateTotal(delivery.resources)) }}</td>
@@ -87,6 +87,7 @@
                 <th>Units</th>
                 <th>Cost</th>
                 <th>Notes</th>
+                <th>Delete</th>
               </tr>
             </thead>
             <tbody>
@@ -99,6 +100,9 @@
                 <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ res.totalUnits }}</div></td>
                 <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ fmtGBP(res.cost) }}</div></td>
                 <td>{{ delivery.notes }}</td>
+                <td>
+                  <Trash2 class="icon-button delete" @click="deletePast(delivery.id)" />
+                </td>
               </tr>
             </tbody>
           </table>
@@ -110,122 +114,123 @@
     </div>
   </template>
   
-  
   <script setup>
-    import { ref, onMounted } from 'vue'
-    import { useResourceStore } from '../store/resources'
-    import { useDeliveriesStore } from '../store/deliveries'
-    import { PencilLine, Trash2 } from 'lucide-vue-next'
-    
-    const resourceStore = useResourceStore()
-    const deliveriesStore = useDeliveriesStore()
-    
-    onMounted(async () => {
-      await resourceStore.fetchResources();
-      await deliveriesStore.fetchDeliveries();
-    })
-    
-    const showModal = ref(false)
-    const showPastModal = ref(false)
-    const editMode = ref(false)
-    const editingIndex = ref(null)
-    
-    const from = ref('')
-    const notes = ref('')
-    const resourceUsages = ref([{ resourceId: '', cases: 1 }])
-    
-    const addResourceRow = () => resourceUsages.value.push({ resourceId: '', cases: 1 })
-    const removeResourceRow = (i) => resourceUsages.value.splice(i, 1)
-    
-    const resetForm = () => {
-      from.value = ''
-      notes.value = ''
-      resourceUsages.value = [{ resourceId: '', cases: 1 }]
-      editMode.value = false
-      editingIndex.value = null
+  import { ref, onMounted } from 'vue'
+  import { useResourceStore } from '../store/resources'
+  import { useDeliveriesStore } from '../store/deliveries'
+  import { PencilLine, Trash2 } from 'lucide-vue-next'
+  
+  const resourceStore = useResourceStore()
+  const deliveriesStore = useDeliveriesStore()
+  
+  onMounted(async () => {
+    await resourceStore.fetchResources()
+    await deliveriesStore.fetchDeliveries()
+  })
+  
+  const showModal = ref(false)
+  const showPastModal = ref(false)
+  const editMode = ref(false)
+  const editingIndex = ref(null)
+  
+  const from = ref('')
+  const notes = ref('')
+  const resourceUsages = ref([{ resourceId: '', cases: 1 }])
+  
+  const addResourceRow = () => resourceUsages.value.push({ resourceId: '', cases: 1 })
+  const removeResourceRow = (i) => resourceUsages.value.splice(i, 1)
+  
+  const resetForm = () => {
+    from.value = ''
+    notes.value = ''
+    resourceUsages.value = [{ resourceId: '', cases: 1 }]
+    editMode.value = false
+    editingIndex.value = null
+  }
+  
+  const openAddModal = () => {
+    resetForm()
+    showModal.value = true
+  }
+  
+  const closeModal = () => {
+    showModal.value = false
+    resetForm()
+  }
+  
+  const getResourceName = (id) => {
+    const res = resourceStore.resources.find(r => r.id === id)
+    return res ? res.name : 'Unknown'
+  }
+  
+  const getUnits = (id, cases) => {
+    const res = resourceStore.resources.find(r => r.id === id)
+    return res ? res.units_per_pack * cases : 0
+  }
+  
+  const getCost = (id, cases) => {
+    const res = resourceStore.resources.find(r => r.id === id)
+    return res ? res.unit_price * res.units_per_pack * cases : 0
+  }
+  
+  const calculateTotal = (items) => {
+    return items.reduce((sum, r) => sum + getCost(r.resourceId, r.cases), 0)
+  }
+  
+  const fmtGBP = (val) => {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: 'GBP'
+    }).format(val)
+  }
+  
+  const saveDelivery = async () => {
+    const payload = {
+      from_location: from.value,
+      notes: notes.value,
+      resources: resourceUsages.value
+        .filter(r => r.resourceId && r.cases)
+        .map(r => ({
+          resource: r.resourceId,
+          cases: r.cases
+        })),
+      completed: false
     }
-    
-    const openAddModal = () => {
-      resetForm()
-      showModal.value = true
-    }
-    
-    const closeModal = () => {
-      showModal.value = false
-      resetForm()
-    }
-    
-    const getResourceName = (id) => {
-      const res = resourceStore.resources.find(r => r.id === id)
-      return res ? res.name : 'Unknown'
-    }
-    
-    const getUnits = (id, cases) => {
-      const res = resourceStore.resources.find(r => r.id === id)
-      return res ? res.units_per_pack * cases : 0
-    }
-    
-    const getCost = (id, cases) => {
-      const res = resourceStore.resources.find(r => r.id === id)
-      return res ? res.unit_price * res.units_per_pack * cases : 0
-    }
-    
-    const calculateTotal = (items) => {
-      return items.reduce((sum, r) => sum + getCost(r.resourceId, r.cases), 0)
-    }
-    
-    const fmtGBP = (val) => {
-      return new Intl.NumberFormat("en-GB", {
-        style: "currency",
-        currency: "GBP"
-      }).format(val)
-    }
-    
-    const saveDelivery = async () => {
-      const payload = {
-        from_location: from.value,
-        notes: notes.value,
-        resources: resourceUsages.value
-          .filter(r => r.resourceId && r.cases)
-          .map(r => ({
-            resource: r.resourceId,
-            cases: r.cases
-          })),
-        completed: false
-      }
-    
-      if (editMode.value && editingIndex.value !== null) {
-        deliveriesStore.updateDelivery(editingIndex.value, payload)
-      } else {
-        await deliveriesStore.addDelivery(payload)
-        await deliveriesStore.fetchDeliveries()
-      }
-    
-      closeModal()
-    }
-    
-    const deleteDelivery = async (i) => {
-      await deliveriesStore.deleteDelivery(i)
+  
+    if (editMode.value && editingIndex.value !== null) {
+      deliveriesStore.updateDelivery(editingIndex.value, payload)
+    } else {
+      await deliveriesStore.addDelivery(payload)
       await deliveriesStore.fetchDeliveries()
     }
-    
-    const startEdit = (i) => {
-      const d = deliveriesStore.deliveries[i]
-      from.value = d.from_location
-      notes.value = d.notes
-      resourceUsages.value = JSON.parse(JSON.stringify(d.resources))
-      editingIndex.value = i
-      editMode.value = true
-      showModal.value = true
-    }
-    
-    const markCompleted = async (i) => {
-      await deliveriesStore.markAsCompleted(i)
-      await resourceStore.fetchResources()
-    }
-    </script>
-    
-    
+  
+    closeModal()
+  }
+  
+  const deleteDelivery = async (i) => {
+    await deliveriesStore.deleteDelivery(i)
+    await deliveriesStore.fetchDeliveries()
+  }
+  
+  const deletePast = async (id) => {
+    await deliveriesStore.deletePastDeliveryById(id)
+  }
+  
+  const startEdit = (i) => {
+    const d = deliveriesStore.deliveries[i]
+    from.value = d.from_location
+    notes.value = d.notes
+    resourceUsages.value = JSON.parse(JSON.stringify(d.resources))
+    editingIndex.value = i
+    editMode.value = true
+    showModal.value = true
+  }
+  
+  const markCompleted = async (i) => {
+    await deliveriesStore.markAsCompleted(i)
+    await deliveriesStore.fetchDeliveries()
+  }
+  </script>    
     
   
   <style scoped>
@@ -287,7 +292,7 @@
     background: #171a23;
     padding: 20px;
     border-radius: 10px;
-    width: 600px;
+    width: 80%;
     text-align: left;
     color: white;
   }
