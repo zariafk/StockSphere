@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Resource, Product
+from .models import Resource, Product, Delivery, DeliveryResource
 
 class ResourceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,3 +28,40 @@ class ProductSerializer(serializers.ModelSerializer):
             if not isinstance(item['units'], (int, float)) or item['units'] <= 0:
                 raise serializers.ValidationError("'units' must be a positive number.")
         return value
+
+
+class DeliveryResourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeliveryResource
+        fields = ['id', 'resource', 'cases']
+
+class DeliverySerializer(serializers.ModelSerializer):
+    resources = DeliveryResourceSerializer(many=True)
+
+    class Meta:
+        model = Delivery
+        fields = ['id', 'from_location', 'notes', 'completed', 'created_at', 'resources']
+
+    def create(self, validated_data):
+        resources_data = validated_data.pop('resources')
+        delivery = Delivery.objects.create(**validated_data)
+        for resource_data in resources_data:
+            DeliveryResource.objects.create(delivery=delivery, **resource_data)
+        return delivery
+
+def update(self, instance, validated_data):
+    resources_data = validated_data.pop('resources', None)
+
+    instance.from_location = validated_data.get('from_location', instance.from_location)
+    instance.notes = validated_data.get('notes', instance.notes)
+    instance.completed = validated_data.get('completed', instance.completed)
+    instance.save()
+
+    # 🛠 Only update resources if new ones were actually provided
+    if resources_data is not None:
+        instance.resources.all().delete()
+        for resource_data in resources_data:
+            DeliveryResource.objects.create(delivery=instance, **resource_data)
+
+    return instance
+
