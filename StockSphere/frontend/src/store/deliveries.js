@@ -127,10 +127,9 @@ export const useDeliveriesStore = defineStore('deliveries', {
       
         try {
           const cleanedDelivery = {
-            id: delivery.id,
             from_location: delivery.from_location,
             notes: delivery.notes,
-            completed: true,  // ✅ Mark as complete
+            completed: true,
             resources: delivery.resources.map(res => ({
               resource: res.resourceId,
               cases: res.cases
@@ -151,8 +150,10 @@ export const useDeliveriesStore = defineStore('deliveries', {
             throw new Error('Failed to complete delivery');
           }
       
+          const updatedDelivery = await res.json();
           const resourceStore = useResourceStore();
       
+          // Update resource stocks
           for (const resItem of delivery.resources) {
             const resource = resourceStore.resources.find(r => r.id === resItem.resourceId);
             if (resource) {
@@ -164,13 +165,41 @@ export const useDeliveriesStore = defineStore('deliveries', {
             }
           }
       
-          await this.fetchDeliveries();  // ✅ Refresh the lists cleanly
+          // 🧠 Manually calculate extra fields
+          const mappedResources = delivery.resources.map(res => {
+            const resourceInfo = resourceStore.resources.find(r => r.id === res.resourceId) || {};
+            const unitsPerPack = resourceInfo.units_per_pack || 1;
+            const unitPrice = resourceInfo.unit_price || 0;
+            const totalUnits = unitsPerPack * res.cases;
+            const cost = totalUnits * unitPrice;
+            return {
+              ...res,
+              resourceName: resourceInfo.name || 'Unknown',
+              unitsPerPack,
+              unitPrice,
+              totalUnits,
+              cost
+            };
+          });
+      
+          const deliveryWithTotals = {
+            id: updatedDelivery.id,
+            from: updatedDelivery.from_location,
+            notes: updatedDelivery.notes,
+            completed: true,
+            created_at: updatedDelivery.created_at,
+            resources: mappedResources,
+            totalCost: mappedResources.reduce((sum, r) => sum + r.cost, 0)
+          };
+      
+          this.deliveries.splice(index, 1);
+          this.pastDeliveries.push(deliveryWithTotals);
       
         } catch (err) {
           console.error('Failed to mark delivery as completed', err);
         }
       }
-               
+      
       
   }
 })
