@@ -424,104 +424,154 @@ const removePlatform = (index) => {
   };
   
   const renderCharts = () => {
-    if (salesForecastChartInstance.value) salesForecastChartInstance.value.destroy();
-    if (salesPlatformChartInstance.value) salesPlatformChartInstance.value.destroy();
-  
-    const ctx1 = document.getElementById("salesForecastChart")?.getContext("2d");
-    const ctx2 = document.getElementById("salesPlatformChart")?.getContext("2d");
-  
-    if (!selectedProduct.value) return;
-  
-    const salesData = [];
-    (selectedProduct.value.sales_forecast || []).forEach((platform) => {
-      platform.periods.forEach((period) => {
-        if (period.unitsSold) {
-          salesData.push({
-            date: new Date(), // fake date because backend currently doesn't store dates
-            units: period.unitsSold,
-          });
-        }
-      });
-    });
-  
-    // Assume one point per month
-    const realSalesUnits = salesData.map((item) => item.units);
-    const realSalesDates = Array.from({ length: realSalesUnits.length }, (_, idx) => {
-      const d = new Date();
-      d.setMonth(d.getMonth() - realSalesUnits.length + idx + 1);
-      return d;
-    });
-  
-    const forecastUnits = [];
-    const forecastDates = [];
-  
-    if (realSalesUnits.length > 0) {
-      const movingAverage = realSalesUnits.slice(-3).reduce((a, b) => a + b, 0) / Math.min(3, realSalesUnits.length);
-      for (let i = 1; i <= 5; i++) {
-        const futureDate = new Date();
-        futureDate.setMonth(new Date().getMonth() + i);
-        forecastDates.push(futureDate);
-        forecastUnits.push(Math.round(movingAverage));
-      }
-    }
-  
-    const allDates = [...realSalesDates, ...forecastDates];
-    const formattedLabels = allDates.map((d) =>
-      d.toLocaleDateString("en-GB", { month: "short", year: "numeric" })
-    );
-  
-    if (ctx1) {
-      salesForecastChartInstance.value = new Chart(ctx1, {
-        type: "line",
-        data: {
-          labels: formattedLabels,
-          datasets: [
-            {
-              label: "Real Sales",
-              data: [...realSalesUnits, ...Array(forecastUnits.length).fill(null)],
-              borderColor: "rgba(75, 192, 192, 1)",
-              borderWidth: 2,
-              fill: false,
-              tension: 0.4,
-            },
-            {
-              label: "Projected Sales",
-              data: [...Array(realSalesUnits.length).fill(null), ...forecastUnits],
-              borderColor: "rgba(255, 99, 132, 1)",
-              borderDash: [5, 5],
-              borderWidth: 2,
-              fill: false,
-              tension: 0.4,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-        },
-      });
-    }
-  
-    if (ctx2) {
-      const platformSales = selectedProduct.value.sales_forecast?.map(p => ({
-        platform: p.platform,
-        totalSales: p.periods.reduce((sum, period) => sum + period.unitsSold, 0),
-      })) || [];
-  
-      if (platformSales.length > 0) {
-        salesPlatformChartInstance.value = new Chart(ctx2, {
-          type: "pie",
-          data: {
-            labels: platformSales.map((p) => p.platform),
-            datasets: [{
-              data: platformSales.map((p) => p.totalSales),
-              backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
-            }],
-          },
+  if (salesForecastChartInstance.value) salesForecastChartInstance.value.destroy();
+  if (salesPlatformChartInstance.value) salesPlatformChartInstance.value.destroy();
+
+  const ctx1 = document.getElementById("salesForecastChart")?.getContext("2d");
+  const ctx2 = document.getElementById("salesPlatformChart")?.getContext("2d");
+
+  if (!selectedProduct.value) return;
+
+  // Step 1: Extract and sort sales data
+  const salesData = [];
+  (selectedProduct.value.sales_forecast || []).forEach((platform) => {
+    platform.periods.forEach((period) => {
+      if (period.unitsSold && period.endDate) {
+        salesData.push({
+          date: new Date(period.endDate),
+          units: period.unitsSold,
         });
       }
+    });
+  });
+
+  salesData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Step 2: Filter last 12 months
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  const filteredSalesData = salesData.filter(d => d.date >= oneYearAgo);
+
+  const realSalesUnits = filteredSalesData.map(d => d.units);
+  const realSalesDates = filteredSalesData.map(d => d.date);
+
+  // Step 3: Calculate forecast
+  const forecastUnits = [];
+  const forecastDates = [];
+
+  const monthlyChanges = [];
+  for (let i = 1; i < realSalesUnits.length; i++) {
+    monthlyChanges.push(realSalesUnits[i] - realSalesUnits[i - 1]);
+  }
+  const avgChange = monthlyChanges.reduce((a, b) => a + b, 0) / monthlyChanges.length || 0;
+
+  const lastRealValue = realSalesUnits[realSalesUnits.length - 1] || 0;
+  const lastRealDate = realSalesDates[realSalesDates.length - 1] || new Date();
+
+  for (let i = 1; i <= 5; i++) {
+    const futureDate = new Date(lastRealDate);
+    futureDate.setDate(1)
+    futureDate.setMonth(futureDate.getMonth() + i);
+    forecastDates.push(futureDate);
+
+    const growth = avgChange * Math.pow(1.1, i - 1); // compound growth
+    const previousValue = i === 1 ? lastRealValue : forecastUnits[i - 2];
+    forecastUnits.push(Math.round(previousValue + growth));
+  }
+
+  // Step 4: Adjust forecast start to avoid duplicated months
+  const firstForecastMonth = forecastDates[0]?.getMonth();
+  const lastRealMonth = lastRealDate.getMonth();
+  const firstForecastYear = forecastDates[0]?.getFullYear();
+  const lastRealYear = lastRealDate.getFullYear();
+
+  const trimmedForecastDates = (firstForecastMonth === lastRealMonth && firstForecastYear === lastRealYear)
+    ? forecastDates.slice(1)
+    : forecastDates;
+
+  const trimmedForecastUnits = (firstForecastMonth === lastRealMonth && firstForecastYear === lastRealYear)
+    ? forecastUnits.slice(1)
+    : forecastUnits;
+
+    const allDates = [...realSalesDates, ...trimmedForecastDates];
+
+const seenMonths = new Set();
+const uniqueDates = [];
+allDates.forEach(date => {
+  const key = `${date.getFullYear()}-${date.getMonth()}`;
+  if (!seenMonths.has(key)) {
+    seenMonths.add(key);
+    uniqueDates.push(date);
+  }
+});
+
+const formattedLabels = uniqueDates.map(d =>
+  d.toLocaleDateString("en-GB", { month: "short", year: "numeric" })
+);
+
+
+
+  const paddedForecast = [
+    ...Array(realSalesUnits.length - 1).fill(null),
+    lastRealValue,
+    ...trimmedForecastUnits
+  ];
+
+  // Step 5: Draw chart
+  if (ctx1) {
+    salesForecastChartInstance.value = new Chart(ctx1, {
+      type: "line",
+      data: {
+        labels: formattedLabels,
+        datasets: [
+          {
+            label: "Real Sales",
+            data: [...realSalesUnits, ...Array(trimmedForecastUnits.length + 1).fill(null)],
+            borderColor: "rgba(75, 192, 192, 1)",
+            borderWidth: 2,
+            fill: false,
+            tension: 0.4,
+          },
+          {
+            label: "Projected Sales",
+            data: paddedForecast,
+            borderColor: "rgba(255, 99, 132, 1)",
+            borderWidth: 2,
+            fill: false,
+            tension: 0.4,
+            borderDash: [5, 5],
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+      },
+    });
+  }
+
+  // Optional: Pie chart
+  if (ctx2) {
+    const platformSales = selectedProduct.value.sales_forecast?.map(p => ({
+      platform: p.platform,
+      totalSales: p.periods.reduce((sum, period) => sum + period.unitsSold, 0),
+    })) || [];
+
+    if (platformSales.length > 0) {
+      salesPlatformChartInstance.value = new Chart(ctx2, {
+        type: "pie",
+        data: {
+          labels: platformSales.map((p) => p.platform),
+          datasets: [{
+            data: platformSales.map((p) => p.totalSales),
+            backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
+          }],
+        },
+      });
     }
-  };
+  }
+};
+
   
   const fmtGBP = (v) => (Number.isFinite(v) ? gbp.format(v) : "—");
   const gbp = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", minimumFractionDigits: 2 });
