@@ -28,6 +28,21 @@ class ProductSerializer(serializers.ModelSerializer):
             if not isinstance(item['units'], (int, float)) or item['units'] <= 0:
                 raise serializers.ValidationError("'units' must be a positive number.")
         return value
+    
+    def validate_sales_forecast(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("sales_forecast must be a list.")
+        for forecast in value:
+            if 'platform' not in forecast or 'periods' not in forecast:
+                raise serializers.ValidationError("Each forecast must include 'platform' and 'periods'.")
+            for period in forecast['periods']:
+                if 'unitsSold' not in period:
+                    raise serializers.ValidationError("Each period must include 'unitsSold'.")
+            # Optional: warn or enforce dates
+                if 'startDate' not in period or 'endDate' not in period:
+                    raise serializers.ValidationError("Each period must include 'startDate' and 'endDate'.")
+        return value
+
 
 
 class DeliveryResourceSerializer(serializers.ModelSerializer):

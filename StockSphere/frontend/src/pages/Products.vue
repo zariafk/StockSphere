@@ -116,29 +116,30 @@
 
 
     <!-- Sales Forecast Modal -->
-<div v-if="showSalesForecastModal" class="modal-overlay">
-  <div class="modal">
-    <h2>Add/Edit Sales Forecast Data</h2>
-
-    <div v-for="(platform, pIndex) in salesPlatforms" :key="pIndex" class="platform-block">
-      <input type="text" v-model="platform.platformName" placeholder="Platform Name" />
-
-      <div v-for="(period, i) in platform.periods" :key="i" class="period-block">
-        <input type="date" v-model="period.startDate" placeholder="Start Date" />
-        <input type="date" v-model="period.endDate" placeholder="End Date" />
-        <input type="number" v-model.number="period.unitsSold" placeholder="Units Sold" />
-        <button @click="removePeriod(pIndex, i)">Remove Period</button>
+    <div v-if="showSalesForecastModal" class="modal-overlay">
+      <div class="modal">
+        <h2>Add/Edit Sales Forecast Data</h2>
+    
+        <input type="text" v-model="tempPlatform.platformName" placeholder="Platform Name" />
+    
+        <div v-for="(period, i) in tempPlatform.periods" :key="i" class="period-block">
+          <input type="date" v-model="period.startDate" />
+          <input type="date" v-model="period.endDate" />
+          <input type="number" v-model.number="period.unitsSold" placeholder="Units Sold" />
+          <button @click="tempPlatform.periods.splice(i, 1)">Remove Period</button>
+        </div>
+    
+        <button class="add-row" @click="tempPlatform.periods.push({ startDate: '', endDate: '', unitsSold: null })">
+          Add Time Period
+        </button>
+    
+        <div class="modal-buttons">
+          <button class="submit-button" @click="saveSalesForecast">Save</button>
+          <button class="close-button" @click="closeSalesForecastModal">Cancel</button>
+        </div>
       </div>
-
-      <button class="add-row" @click="addPeriod(pIndex)">Add Time Period</button>
     </div>
-
-    <div class="modal-buttons">
-      <button class="submit-button" @click="saveSalesForecast">Save</button>
-      <button class="close-button" @click="closeSalesForecastModal">Cancel</button>
-    </div>
-  </div>
-</div>
+    
 
 
     <!-- Product Details Modal -->
@@ -189,6 +190,7 @@
   
   const showModal = ref(false);
   const salesPlatformsEditIndex = ref(null);
+  const tempPlatform = ref({ platformName: "", periods: [] });
   const showSalesForecastModal = ref(false);
   const showProductDetailsModal = ref(false);
   const selectedProduct = ref(null);
@@ -253,35 +255,30 @@
   return d.toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
-  const openSalesForecastModal = (platformIndex = null) => {
+const openSalesForecastModal = (platformIndex = null) => {
   if (platformIndex === null) {
-    // Add new
-    salesPlatforms.value = [{
+    // Add new platform
+    tempPlatform.value = {
       platformName: "",
       periods: [{ startDate: "", endDate: "", unitsSold: null }]
-    }];
+    };
     salesPlatformsEditIndex.value = null;
   } else {
-    // Edit existing
-    const existing = salesForecastSummary.value[platformIndex];
-    const original = productStore.products.find(
-      p => p.id === editingId.value || selectedProduct.value?.id === p.id
-    );
-    const fullData = original.sales_forecast.find(p => p.platform === existing.platform);
-
-    salesPlatforms.value = [{
-      platformName: fullData.platform,
-      periods: fullData.periods.map(p => ({
+    const existingPlatform = salesPlatforms.value[platformIndex];
+    tempPlatform.value = {
+      platformName: existingPlatform.platformName,
+      periods: existingPlatform.periods.map(p => ({
         startDate: formatToInputDate(p.startDate),
         endDate: formatToInputDate(p.endDate),
         unitsSold: p.unitsSold || 0
       }))
-    }];
+    };
     salesPlatformsEditIndex.value = platformIndex;
   }
 
   showSalesForecastModal.value = true;
 };
+
 
 
   
@@ -298,33 +295,21 @@
   };
   
   const saveSalesForecast = () => {
-  const updatedPlatform = salesPlatforms.value[0];
+  const platformData = {
+    platformName: tempPlatform.value.platformName,
+    periods: tempPlatform.value.periods
+  };
 
   if (salesPlatformsEditIndex.value !== null) {
-  // Edit existing
-  salesPlatforms.value[salesPlatformsEditIndex.value] = {
-    platformName: updatedPlatform.platformName,
-    periods: updatedPlatform.periods.map(p => ({
-      startDate: p.startDate,
-      endDate: p.endDate,
-      unitsSold: p.unitsSold
-    }))
-  };
-} else {
-  // Add new
-  salesPlatforms.value.push({
-    platformName: updatedPlatform.platformName,
-    periods: updatedPlatform.periods.map(p => ({
-      startDate: p.startDate,
-      endDate: p.endDate,
-      unitsSold: p.unitsSold
-    }))
-  });
+    salesPlatforms.value[salesPlatformsEditIndex.value] = platformData;
+  } else {
+    salesPlatforms.value.push(platformData);
   }
 
   salesPlatformsEditIndex.value = null;
   showSalesForecastModal.value = false;
 };
+
 
 
 const removePlatform = (index) => {
