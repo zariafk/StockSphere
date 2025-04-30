@@ -33,6 +33,7 @@ class Product(models.Model):
     profit = models.FloatField()
     units_in_stock = models.IntegerField()
     notes = models.TextField(null=True, blank=True)
+    sales_forecast = models.JSONField(default=list)
     resource_usages = models.JSONField(default=list)  # Store the resource usage as JSON
     user = models.ForeignKey(User, on_delete=models.CASCADE)  # Each product is linked to a user
 
