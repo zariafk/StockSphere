@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     # AUTHENTICATION endpoints
@@ -27,6 +28,12 @@ urlpatterns = [
     path('api/deliveries/<int:delivery_id>/update', views.update_delivery, name='update_delivery'),
     path('api/deliveries/<int:delivery_id>/delete', views.delete_delivery, name='delete_delivery'),
 
+    #2FA
     path('api/verify-2fa', views.verify_2fa_view),
 
+    #FORGOT PASSWORD
+    path('password_reset', views.password_reset_request, name='password_reset_request'),
+    path('password_reset_done', views.password_reset_done, name='password_reset_done'),
+    path('password_reset_confirm/<uidb64>/<token>', views.password_reset_confirm, name='password_reset_confirm'),
+    path('password_reset_complete', views.password_reset_complete, name='password_reset_complete'),
 ]

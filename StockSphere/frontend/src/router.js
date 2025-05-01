@@ -50,6 +50,16 @@ const routes = [
     path: '/deliveries',
     name: 'deliveries',
     component: Deliveries,
+  },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import ('./pages/ForgotPassword.vue'),
+  },
+  {
+    path: '/reset/:uid/:token',
+    name: 'reset-password',
+    compoent: () => import('./pages/ResetPassword.vue')
   }
 ]
 
