@@ -1,3 +1,5 @@
+import random
+
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
@@ -12,35 +14,77 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Resource, Product, Delivery, DeliveryResource
 from .serializers import ResourceSerializer, ProductSerializer, DeliverySerializer
+from django.core.mail import send_mail
+from django.contrib.auth.models import User
 
 # AUTHENTICATION
 @ensure_csrf_cookie
 @require_http_methods(['GET'])
 def set_csrf_token(request):
-    """
-    We set the CSRF cookie on the frontend.
-    """
     return JsonResponse({'message': 'CSRF cookie set'})
 
 @require_http_methods(['POST'])
+@csrf_exempt
 def login_view(request):
     try:
         data = json.loads(request.body.decode('utf-8'))
         username = data.get('username')
         password = data.get('password')
     except json.JSONDecodeError:
-        return JsonResponse(
-            {'success': False, 'message': 'Invalid JSON'}, status=400
-        )
+        return JsonResponse({'success': False, 'message': 'Invalid JSON'}, status=400)
 
     user = authenticate(request, username=username, password=password)
 
     if user:
+        # Generate 6-digit code
+        code = random.randint(100000, 999999)
+
+        # Store 2FA info in session
+        request.session['2fa_user_id'] = user.id
+        request.session['2fa_code'] = str(code)
+        request.session.modified = True
+
+
+        # Send email with 2FA code
+        send_mail(
+            'Your 2FA Code',
+            f'Your verification code is: {code}',
+            'noreply@yourdomain.com',  # Or your Gmail address
+            [user.email],
+            fail_silently=False,
+        )
+
+        return JsonResponse({'success': True, 'message': '2FA code sent to email'})
+    
+    return JsonResponse({'success': False, 'message': 'Invalid credentials'}, status=401)
+
+@require_http_methods(['POST'])
+@csrf_exempt
+def verify_2fa_view(request):
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        code = data.get('code')
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Invalid JSON'}, status=400)
+
+    user_id = request.session.get('2fa_user_id')
+    stored_code = request.session.get('2fa_code')
+
+    if not user_id or not stored_code:
+        return JsonResponse({'success': False, 'message': '2FA session expired'}, status=403)
+
+    if str(code) == stored_code:
+        user = User.objects.get(id=user_id)
         login(request, user)
-        return JsonResponse({'success': True})
-    return JsonResponse(
-        {'success': False, 'message': 'Invalid credentials'}, status=401
-    )
+
+        # Clear the session
+        del request.session['2fa_user_id']
+        del request.session['2fa_code']
+
+        return JsonResponse({'success': True, 'message': '2FA verified'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid verification code'}, status=403)
+
 
 def logout_view(request):
     logout(request)

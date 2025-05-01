@@ -18,34 +18,56 @@ export const useAuthStore = defineStore('auth', {
       })
     },
 
-    async login(username, password, router = null) {
+    async login(username, password) {
       const response = await fetch('http://localhost:8000/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': getCSRFToken(),
         },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
+        body: JSON.stringify({ username, password }),
         credentials: 'include',
       })
+    
       const data = await response.json()
+    
       if (data.success) {
-        this.isAuthenticated = true
-        this.saveState()
-        if (router) {
-          await router.push({
-            name: 'dashboard',
-          })
-        }
+        // DO NOT mark user as authenticated yet
+        return { requires2FA: true }
       } else {
         this.user = null
         this.isAuthenticated = false
         this.saveState()
+        return { requires2FA: false, error: data.message }
       }
     },
+
+    async verify2FA(code, router = null) {
+      const response = await fetch('http://localhost:8000/api/verify-2fa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({ code }),
+        credentials: 'include',
+      });
+    
+      const data = await response.json();
+    
+      if (data.success) {
+        await this.fetchUser(); // populates user info
+        this.isAuthenticated = true;
+        this.saveState();
+    
+        if (router) {
+          await router.push({ name: 'dashboard' });
+        }
+      } else {
+        throw new Error(data.message || 'Invalid 2FA code');
+      }
+    },    
+    
 
     async logout(router = null) {
       try {
