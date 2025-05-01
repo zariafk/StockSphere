@@ -26,4 +26,7 @@ urlpatterns = [
     path('api/deliveries/add', views.add_delivery, name='add_delivery'),
     path('api/deliveries/<int:delivery_id>/update', views.update_delivery, name='update_delivery'),
     path('api/deliveries/<int:delivery_id>/delete', views.delete_delivery, name='delete_delivery'),
+
+    path('api/verify-2fa', views.verify_2fa_view),
+
 ]

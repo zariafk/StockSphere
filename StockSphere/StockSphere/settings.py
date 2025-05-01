@@ -45,7 +45,15 @@ INSTALLED_APPS = [
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]  # We add frontend URL here.
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5173'] 
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5173','http://127.0.0.1:8000'] 
+
+# Session cookie must be allowed cross-origin
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True  # This MUST be True when SameSite=None
+
+# Also make CSRF cookie stricter (optional but good)
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = True
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -95,6 +103,15 @@ DATABASES = {
     }
 }
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'noreply.stocksphere@gmail.com'  # Replace this
+EMAIL_HOST_PASSWORD = 'xoqc ecpu twch llnu'  # Use an app password from Gmail
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -138,3 +155,5 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+APPEND_SLASH = False
