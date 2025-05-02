@@ -39,4 +39,6 @@ urlpatterns = [
 
     #NNOTIFICATIONS
     path('api/dashboard', views.dashboard, name='dashboard'),
+        path('api/notifications/<int:notification_id>/read', views.mark_notification_as_read, name='mark_notification_as_read'), 
+
 ]

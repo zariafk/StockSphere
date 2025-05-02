@@ -247,6 +247,10 @@
   };
 
   const checkStock = () => {
+    
+    const notificationsSent = localStorage.getItem("notificationsSent");
+    if (notificationsSent) return;
+
     console.log('Authenticated User:', authStore.user);
 
   productStore.products.forEach(async (product) => {
@@ -260,11 +264,6 @@
         is_read: false,
       });
       const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
-      console.log('Payload being sent:', {
-  userId: authStore.user?.username,
-  message: `Product "${product.name}" has 25 or fewer units left.`,
-  is_read: false,
-});
 const userId = authStore.user?.id;
 console.log('Authenticated User ID:', userId);
       // Send a request to the backend to save the notification
@@ -293,8 +292,9 @@ console.log('Authenticated User ID:', userId);
       }
     }
   });
-};
+  localStorage.setItem("notificationsSent", "true");
 
+};
 
   const salesForecastSummary = computed(() =>
   salesPlatforms.value.map(p => ({
@@ -303,7 +303,6 @@ console.log('Authenticated User ID:', userId);
   }))
 );
 
-  
   const addResourceRow = () => {
     resourceUsages.value.push({ resourceId: "", units: null });
   };
@@ -342,7 +341,6 @@ const openSalesForecastModal = (platformIndex = null) => {
 
   showSalesForecastModal.value = true;
 };
-
   
   const closeSalesForecastModal = () => {
     showSalesForecastModal.value = false;
@@ -381,6 +379,9 @@ const removePlatform = (index) => {
 
   
   const saveProduct = async () => {
+    // Reset flag after certain actions
+    localStorage.removeItem("notificationsSent");
+
     const forecastData = salesPlatforms.value.map(platform => ({
   platform: platform.platformName,
   periods: platform.periods.map(p => ({

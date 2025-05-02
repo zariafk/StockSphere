@@ -413,7 +413,17 @@ def dashboard(request):
         ]
         return JsonResponse(notifications_data, safe=False)
 
+@require_http_methods(['PUT'])
+@login_required
+def mark_notification_as_read(request, notification_id):
+    # Fetch the notification by ID
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
 
+    # Mark the notification as read
+    notification.is_read = True
+    notification.save()
+
+    return JsonResponse({'message': 'Notification marked as read'}, status=200)
 
 # Fetch deliveries
 @require_http_methods(['GET'])
