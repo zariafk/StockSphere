@@ -82,6 +82,9 @@
 import { onMounted, ref } from "vue";
 import { useResourceStore } from "../store/resources";
 import { PencilLine, Trash2 } from 'lucide-vue-next';
+import { useNotificationStore } from '../store/notifications';
+import { useAuthStore } from '../store/auth';
+
 
 const resourceStore = useResourceStore();
 const showModal = ref(false);
@@ -96,8 +99,17 @@ const notes = ref("");
 const editMode = ref(false);
 const editingId = ref(null);
 
-onMounted(() => {
-    resourceStore.fetchResources();
+const authStore = useAuthStore();
+const notificationStore = useNotificationStore();
+
+onMounted(async() => {
+    await resourceStore.fetchResources();
+    if (resourceStore.resources.length > 0) {
+    console.log('Calling checkResourceStock...');
+    checkResourceStock();
+  } else {
+    console.log('No resources to check stock for.');
+  }
 });
 
 const saveResource = async () => {
@@ -142,6 +154,57 @@ const resetForm = () => {
     editingId.value = null;
     editMode.value = false;
 };
+
+const checkResourceStock = () => {
+  const notificationsSent = localStorage.getItem("notificationsSent");
+  if (notificationsSent) return;
+
+  console.log('Authenticated User:', authStore.user);
+
+  resourceStore.resources.forEach(async (resource) => {
+    console.log('Resource object:', resource);
+
+    if (resource.available_units <= 50) {
+      // Push the notification locally
+      notificationStore.notifications.push({
+        message: `Resource "${resource.name}" has 50 or fewer units left.`,
+        type: 'alert',
+        is_read: false,
+      });
+
+      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+      const userId = authStore.user?.id;
+      console.log('Authenticated User ID:', userId);
+
+      // Send a request to the backend to save the notification
+      try {
+        const response = await fetch('http://localhost:8000/api/dashboard', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            userId: authStore.user?.username,
+            message: `Resource "${resource.name}" has 50 or fewer units left.`,
+            is_read: false,
+          }),
+        });
+
+        if (response.ok) {
+          console.log('Notification saved to the backend');
+        } else {
+          console.error('Failed to save notification to backend');
+        }
+      } catch (error) {
+        console.error('Error saving notification:', error);
+      }
+    }
+  });
+  localStorage.setItem("notificationsSent", "true");
+};
+
 
 const openAddResourceModal = () => {
     resetForm();

@@ -102,7 +102,6 @@
             </ul>
           </div>
         </div>
-        
       </div>
 
       <div class="modal-buttons">
@@ -179,14 +178,18 @@
 </template>
 
 <script setup>
-  import { ref, computed, onMounted, nextTick } from "vue";
+  import { ref, computed, onMounted, nextTick } from 'vue';
   import { PencilLine, Trash2, Info, Edit, X } from "lucide-vue-next";
   import { useResourceStore } from "../store/resources";
   import { useProductStore } from "../store/products";
+  import { useNotificationStore } from '../store/notifications';
   import Chart from "chart.js/auto";
+  import { useAuthStore } from '../store/auth';  
   
   const resourceStore = useResourceStore();
   const productStore = useProductStore();
+  const authStore = useAuthStore();
+
   
   const showModal = ref(false);
   const salesPlatformsEditIndex = ref(null);
@@ -206,10 +209,21 @@
   
   const salesForecastChartInstance = ref(null);
   const salesPlatformChartInstance = ref(null);
+
+  const notificationStore = useNotificationStore();
   
-  onMounted(() => {
-    resourceStore.fetchResources();
-    productStore.fetchProducts();
+  onMounted(async() => {
+    console.log('User authenticated:', authStore.isAuthenticated);
+
+    await resourceStore.fetchResources();
+    await productStore.fetchProducts();
+    console.log(productStore.products);
+    if (productStore.products.length > 0) {
+    console.log('Calling checkStock...');  // This log should appear
+    checkStock();
+  } else {
+    console.log('No products to check stock for.');
+  }
   });
   
   const openAddProductModal = () => {
@@ -232,6 +246,56 @@
     editMode.value = false;
   };
 
+  const checkStock = () => {
+    
+    const notificationsSent = localStorage.getItem("notificationsSent");
+    if (notificationsSent) return;
+
+    console.log('Authenticated User:', authStore.user);
+
+  productStore.products.forEach(async (product) => {
+    console.log('Product object:', product);
+
+    if (product.units_in_stock <= 25) {
+      // Push the notification locally
+      notificationStore.notifications.push({
+        message: `Product "${product.name}" has 25 or fewer units left.`,
+        type: 'alert',
+        is_read: false,
+      });
+      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+const userId = authStore.user?.id;
+console.log('Authenticated User ID:', userId);
+      // Send a request to the backend to save the notification
+      try {
+        const response = await fetch('http://localhost:8000/api/dashboard', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            userId: authStore.user?.username,
+            message: `Product "${product.name}" has 25 or fewer units left.`,
+            is_read: false,
+          }),
+        });
+
+        if (response.ok) {
+          console.log('Notification saved to the backend');
+        } else {
+          console.error('Failed to save notification to backend');
+        }
+      } catch (error) {
+        console.error('Error saving notification:', error);
+      }
+    }
+  });
+  localStorage.setItem("notificationsSent", "true");
+
+};
+
   const salesForecastSummary = computed(() =>
   salesPlatforms.value.map(p => ({
     platform: p.platformName,
@@ -239,7 +303,6 @@
   }))
 );
 
-  
   const addResourceRow = () => {
     resourceUsages.value.push({ resourceId: "", units: null });
   };
@@ -278,9 +341,6 @@ const openSalesForecastModal = (platformIndex = null) => {
 
   showSalesForecastModal.value = true;
 };
-
-
-
   
   const closeSalesForecastModal = () => {
     showSalesForecastModal.value = false;
@@ -319,6 +379,9 @@ const removePlatform = (index) => {
 
   
   const saveProduct = async () => {
+    // Reset flag after certain actions
+    localStorage.removeItem("notificationsSent");
+
     const forecastData = salesPlatforms.value.map(platform => ({
   platform: platform.platformName,
   periods: platform.periods.map(p => ({
@@ -596,6 +659,7 @@ const formattedLabels = uniqueDates.map(d =>
     return sales_price.value - computedCost.value;
   });
   </script>
+
   <style scoped>
     .products-container {
       color: #eaeaea;
