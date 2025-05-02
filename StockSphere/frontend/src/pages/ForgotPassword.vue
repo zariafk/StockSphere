@@ -74,6 +74,8 @@
   .forgot-password {
     max-width: 400px;
     margin: 100px auto;
+    margin-left: 400px;
+    margin-top: 100px;
     padding: 1.5rem;
     background-color: #292929;
     color: #f0f0f0;
