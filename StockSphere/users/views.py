@@ -12,7 +12,7 @@ from .forms import CreateUserForm
 
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Resource, Product, Delivery, DeliveryResource
+from .models import Resource, Product, Delivery, DeliveryResource, Notification
 from .serializers import ResourceSerializer, ProductSerializer, DeliverySerializer
 from django.core.mail import send_mail
 from django.contrib.auth.models import User
@@ -322,6 +322,98 @@ def delete_product(request, product_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
     
+
+# Fetch notifications for the logged-in user
+@require_http_methods(['GET'])
+def fetch_notifications(request):
+    # Manual authentication check
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "User not authenticated"}, status=401)
+
+    # Fetch unread notifications for the logged-in user
+    notifications = Notification.objects.filter(user=request.user, is_read=False).order_by('-created_at')
+    notifications_data = [
+        {
+            'id': notification.id,
+            'message': notification.message,
+            'is_read': notification.is_read,
+            'created_at': notification.created_at,
+        }
+        for notification in notifications
+    ]
+    return JsonResponse(notifications_data, safe=False)
+
+
+# Save a new notification
+@require_http_methods(['POST'])
+def save_notification(request):
+    # Manual authentication check
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "User not authenticated"}, status=401)
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_id = data.get('userId')
+            message = data.get('message')
+            is_read = data.get('is_read', False)
+
+            # Create and save the notification
+            notification = Notification(user_id=user_id, message=message, is_read=is_read)
+            notification.save()
+
+            return JsonResponse({"message": "Notification saved successfully"}, status=201)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+# Dashboard: Fetch and save notifications
+# If CSRF is enabled, remove this.
+@require_http_methods(['GET', 'POST'])
+def dashboard(request):
+    # Manual authentication check
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "User not authenticated"}, status=401)
+
+    if request.method == 'POST':
+        try:
+            # Parse the request body
+            data = json.loads(request.body)
+            user_id = data.get('userId')
+            message = data.get('message')
+            is_read = data.get('is_read', False)
+
+            # Check for missing required fields
+            if not user_id or not message:
+                return JsonResponse({"error": "Missing required fields"}, status=400)
+
+            # Retrieve the user object based on username (since you're sending username as userId)
+            user = User.objects.get(username=user_id)
+
+            # Create and save the notification
+            notification = Notification(user=user, message=message, is_read=is_read)
+            notification.save()
+
+            return JsonResponse({"message": "Notification saved successfully"}, status=201)
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    elif request.method == 'GET':
+        # Fetch notifications for the logged-in user
+        notifications = Notification.objects.filter(user=request.user, is_read=False).order_by('-created_at')
+        notifications_data = [
+            {
+                'id': notification.id,
+                'message': notification.message,
+                'is_read': notification.is_read,
+                'created_at': notification.created_at,
+            }
+            for notification in notifications
+        ]
+        return JsonResponse(notifications_data, safe=False)
+
+
 
 # Fetch deliveries
 @require_http_methods(['GET'])
