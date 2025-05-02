@@ -21,6 +21,7 @@
             <input v-model="password" id="password" type="password" required @input="resetError" />
   
             <button type="submit">Login</button>
+            <router-link to="/forgot-password" class="forgot-link">Forgot Password?</router-link>
           </form>
   
           <!-- Step 2: 2FA Code -->
@@ -204,5 +205,13 @@
     margin-top: 1.2rem;
     text-align: center;
   }
+  .forgot-link {
+  color: #b43de6;
+  margin-top: 1rem;
+  text-align: center;
+  display: block;
+  text-decoration: underline;
+  cursor: pointer;
+}
   </style>
   

@@ -1,6 +1,6 @@
 import random
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 import json
@@ -16,6 +16,21 @@ from .models import Resource, Product, Delivery, DeliveryResource
 from .serializers import ResourceSerializer, ProductSerializer, DeliverySerializer
 from django.core.mail import send_mail
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.template.loader import render_to_string
+from django.conf import settings
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+
+from django.template.loader import get_template
+
+try:
+    template = get_template('password-reset-email.html')
+    print("Template found!")
+except Exception as e:
+    print("Error: ", e)
+
 
 # AUTHENTICATION
 @ensure_csrf_cookie
@@ -23,6 +38,91 @@ from django.contrib.auth.models import User
 def set_csrf_token(request):
     return JsonResponse({'message': 'CSRF cookie set'})
 
+from django.http import JsonResponse
+from django.contrib.auth.forms import PasswordResetForm
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth import get_user_model
+
+def password_reset_request(request):
+    if request.method == "POST":
+        try:
+            # Ensure the request body is JSON
+            import json
+            body = json.loads(request.body.decode('utf-8'))
+            email = body.get('email', None)
+
+            # Check if the email is provided
+            if not email:
+                return JsonResponse({'error': 'Email is required'}, status=400)
+
+            # Use PasswordResetForm to validate the email
+            form = PasswordResetForm(data={'email': email})
+            if form.is_valid():
+                # If email is valid, send the reset link
+                users = list(form.get_users(email))  # Convert the generator to a list
+                if users:
+                    user = users[0]  # Now you can safely access the first user
+                    token = default_token_generator.make_token(user)
+                    uid = urlsafe_base64_encode(str(user.pk).encode())
+
+                    # Construct the password reset URL
+                    reset_link = f'http://localhost:8000/password_reset_confirm/{uid}/{token}'
+
+                    # Send the password reset email
+                    send_mail(
+                        'Password Reset Request',
+                        f'Click the following link to reset your password: {reset_link}',
+                        'no-reply@example.com',
+                        [email],
+                        fail_silently=False,
+                    )
+                    return JsonResponse({'message': 'Check your email for a reset link.'}, status=200)
+                else:
+                    return JsonResponse({'error': 'No user found with this email address.'}, status=400)
+
+            else:
+                # If form is invalid (email not found, etc.)
+                return JsonResponse({'error': 'Invalid email address or user does not exist.'}, status=400)
+
+        except json.JSONDecodeError:
+            # Handle case where JSON is not properly formatted
+            return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+def password_reset_done(request):
+    return render(request, 'password_reset_done.html')
+
+
+def password_reset_confirm(request, uidb64, token):
+    try:
+        # Decode the UID from base64
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = get_user_model().objects.get(pk=uid)
+
+        # Check if the token is valid
+        if default_token_generator.check_token(user, token):
+            if request.method == 'POST':
+                form = SetPasswordForm(user, request.POST)
+                if form.is_valid():
+                    form.save()
+                    return redirect('password_reset_complete')
+            else:
+                form = SetPasswordForm(user)
+            return render(request, 'password_reset_confirm.html', {'form': form})
+
+        else:
+            return JsonResponse({'error': 'The reset link is invalid or expired.'}, status=400)
+
+    except Exception as e:
+        return JsonResponse({'error': 'Invalid reset link.'}, status=400)
+
+
+def password_reset_complete(request):
+    return render(request, 'password_reset_complete.html')
+    
 @require_http_methods(['POST'])
 @csrf_exempt
 def login_view(request):

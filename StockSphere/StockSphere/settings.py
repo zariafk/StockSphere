@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,21 +38,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'rest_framework',
     'corsheaders',
     'users',
 ]
 
+SITE_ID = 1
+
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]  # We add frontend URL here.
+CORS_ALLOWED_ORIGINS = ['http://localhost:5173']  # We add frontend URL here.
 CSRF_TRUSTED_ORIGINS = ['http://localhost:5173','http://127.0.0.1:8000'] 
 
-# Session cookie must be allowed cross-origin
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True  # This MUST be True when SameSite=None
-
-# Also make CSRF cookie stricter (optional but good)
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = True
 
@@ -68,10 +69,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'StockSphere.urls'
 
+import os
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # Points to templates folder at the project level
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -110,6 +112,33 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'noreply.stocksphere@gmail.com'  # Replace this
 EMAIL_HOST_PASSWORD = 'xoqc ecpu twch llnu'  # Use an app password from Gmail
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+FRONTEND_URL = 'http://localhost:5173'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'WARNING',  # Set to 'WARNING' to suppress DEBUG and INFO
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'WARNING',  # Only show WARNING, ERROR, or CRITICAL logs
+            'propagate': True,
+        },
+        'django.core.mail': {
+            'handlers': ['console'],
+            'level': 'WARNING',  # Log only warnings or errors related to email sending
+            'propagate': False,
+        },
+    },
+}
+
+
 
 
 
