@@ -418,7 +418,6 @@ def dashboard(request):
 def mark_notification_as_read(request, notification_id):
     # Fetch the notification by ID
     notification = get_object_or_404(Notification, id=notification_id, user=request.user)
-
     # Mark the notification as read
     notification.is_read = True
     notification.save()
