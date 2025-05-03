@@ -12,8 +12,8 @@ from .forms import CreateUserForm
 
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Resource, Product, Delivery, DeliveryResource, Notification
-from .serializers import ResourceSerializer, ProductSerializer, DeliverySerializer
+from .models import Resource, Product, Delivery, DeliveryResource, Notification, Post, Community, Comment
+from .serializers import ResourceSerializer, ProductSerializer, DeliverySerializer, PostSerializer, CommentSerializer, CommunitySerializer
 from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
@@ -22,8 +22,12 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+from rest_framework import status
 
 from django.template.loader import get_template
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import viewsets
 
 try:
     template = get_template('password-reset-email.html')
@@ -469,7 +473,7 @@ def update_delivery(request, delivery_id):
                     cases=res_data['cases']
                 )
 
-        # ✅ Re-serialize and return updated delivery
+        # Re-serialize and return updated delivery
         updated_delivery_data = DeliverySerializer(delivery).data
 
         return JsonResponse(updated_delivery_data, status=200)
@@ -477,7 +481,6 @@ def update_delivery(request, delivery_id):
     except Exception as e:
         print('Error in update_delivery:', e)
         return JsonResponse({'error': str(e)}, status=500)
-
 
 
 
@@ -491,3 +494,45 @@ def delete_delivery(request, delivery_id):
         return JsonResponse({'message': 'Deleted successfully'}, status=204)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
+
+class CommunityViewSet(viewsets.ModelViewSet):
+    queryset = Community.objects.all()
+    serializer_class = CommunitySerializer
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+    
+    def perform_create(self, serializer):
+        # Automatically set the 'created_by' field to the currently authenticated user
+        serializer.save(created_by=self.request.user)
+
+class PostViewSet(viewsets.ModelViewSet):
+    print("PostViewSet Hit!")
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        print("create inside PostViewSet Hit!")
+        if request.user.is_authenticated:
+            print(f"Authenticated User: {request.user.username}")  # Print the authenticated user's username
+        else:
+            print("User is not authenticated!")  # Print if the user is not authenticated
+        # Manually set the 'author' field to the current logged-in user
+        data = request.data.copy()  # Make a copy to modify
+        data['author'] = request.user.id  # Add the author field
+        data['community'] = int(data.get('community'))
+        print(f"Post Data: {data}")  # Print data to verify if 'author' is being set correctly
+
+        # Pass the modified data to the serializer
+        serializer = self.get_serializer(data=data)
+        
+        if serializer.is_valid():
+            serializer.save()  # Save the post
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            print(f"Serializer errors: {serializer.errors}")  # Print the serializer errors
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer

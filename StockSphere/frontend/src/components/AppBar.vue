@@ -7,6 +7,7 @@
         <router-link to="/products">Products</router-link>
         <router-link to="/planning">Planning</router-link>
         <router-link to="/deliveries">Deliveries</router-link>
+        <router-link to="/forum">Forum</router-link>
       </div>
     </nav>
   </template>

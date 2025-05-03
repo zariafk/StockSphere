@@ -120,7 +120,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
-            'level': 'WARNING',  # Set to 'WARNING' to suppress DEBUG and INFO
+            'level': 'WARNING',  # Set to 'WARNING' to suppress INFO and DEBUG logs
             'class': 'logging.StreamHandler',
         },
     },
@@ -130,13 +130,41 @@ LOGGING = {
             'level': 'WARNING',  # Only show WARNING, ERROR, or CRITICAL logs
             'propagate': True,
         },
-        'django.core.mail': {
+        # Suppress logs related to migrations
+        'django.db.migrations': {
             'handlers': ['console'],
-            'level': 'WARNING',  # Log only warnings or errors related to email sending
+            'level': 'ERROR',  # Suppress migration logs by setting level to ERROR
+            'propagate': False,
+        },
+        # Suppress logs related to specific Django apps like auth, contenttypes, etc.
+        'django.contrib.auth': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Hide debug/info logs related to auth
+            'propagate': False,
+        },
+        'django.contrib.contenttypes': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Hide debug/info logs related to contenttypes
+            'propagate': False,
+        },
+        'django.db': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Hide info-level logs related to DB and migrations
+            'propagate': False,
+        },
+        'django.contrib.sites': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Hide logs related to django.contrib.sites
+            'propagate': False,
+        },
+        'django.contrib.sessions': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Hide logs related to sessions
             'propagate': False,
         },
     },
 }
+
 
 
 

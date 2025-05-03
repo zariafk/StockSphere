@@ -1,6 +1,13 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 from django.contrib.auth import views as auth_views
+from rest_framework.routers import DefaultRouter
+from .views import CommunityViewSet, PostViewSet, CommentViewSet
+
+router = DefaultRouter()
+router.register(r'communities', CommunityViewSet)
+router.register(r'posts', PostViewSet)
+router.register(r'comments', CommentViewSet)
 
 urlpatterns = [
     # AUTHENTICATION endpoints
@@ -39,6 +46,7 @@ urlpatterns = [
 
     #NNOTIFICATIONS
     path('api/dashboard', views.dashboard, name='dashboard'),
-        path('api/notifications/<int:notification_id>/read', views.mark_notification_as_read, name='mark_notification_as_read'), 
+    path('api/notifications/<int:notification_id>/read', views.mark_notification_as_read, name='mark_notification_as_read'), 
 
+    path('api/', include(router.urls)),
 ]
