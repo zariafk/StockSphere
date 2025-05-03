@@ -28,7 +28,10 @@
         </div>
       </div>
   
-      <ul>
+      <!-- Show a loading message if data is being fetched -->
+      <p v-if="isLoading">Loading communities...</p>
+  
+      <ul v-if="!isLoading">
         <li v-for="community in communities" :key="community.id">
           <router-link :to="`/forum/${community.id}`">{{ community.name }}</router-link>
         </li>
@@ -36,60 +39,67 @@
     </div>
   </template>
   
+  
   <script>
-  import { useForumStore } from '../store/forum';
-  import axios from '../axios';
-  
-  export default {
-    data() {
-      return {
-        communities: [],
-        showModal: false, // Controls the visibility of the modal
-        community: {
-          name: '',
-          description: '',
+    import { useForumStore } from '../store/forum';  // Assuming you're using a Vuex store
+    import axios from '../axios';  // Axios instance to interact with the API
+    
+    export default {
+      data() {
+        return {
+          communities: [],  // List of communities to display
+          showModal: false,  // Controls visibility of the modal for creating a new community
+          community: {
+            name: '',
+            description: '',
+          },
+        };
+      },
+      async created() {
+        const forumStore = useForumStore();  // Access the Vuex store
+        await forumStore.fetchCommunities();  // Fetch communities from the store
+        this.communities = forumStore.communities;  // Set the component's communities list
+      },
+      methods: {
+        // Method to create a new community
+        async createCommunity() {
+          try {
+            // Send POST request to create the new community
+            await axios.post('/api/communities/', this.community);
+            
+            // Fetch updated list of communities after creation
+            await this.fetchCommunities();
+    
+            // Close the modal and reset the form
+            this.closeModal();
+            this.community = { name: '', description: '' };
+    
+            alert('Community created successfully!');
+          } catch (error) {
+            console.error('Error creating community:', error);
+            alert('There was an error creating the community.');
+          }
         },
-      };
-    },
-    created() {
-      const forumStore = useForumStore();
-      forumStore.fetchCommunities();
-      this.communities = forumStore.communities;
-    },
-    methods: {
-      async createCommunity() {
-        try {
-          // Send POST request to create the community
-          await axios.post('/api/communities/', this.community);
-          
-          // Fetch updated list of communities after creation
-          this.fetchCommunities();
-  
-          // Close the modal and reset the form
-          this.closeModal();
-          this.community = { name: '', description: '' };
-  
-          alert('Community created successfully!');
-        } catch (error) {
-          console.error('Error creating community:', error);
-          alert('There was an error creating the community.');
-        }
+    
+        // Method to fetch communities from the API and update the local state
+        async fetchCommunities() {
+          try {
+            const response = await axios.get('/api/communities/');
+            console.log(response.data);  // Log the response to check the fetched communities
+            this.communities = response.data;  // Update the component's community list
+          } catch (error) {
+            console.error('Error fetching communities:', error);
+          }
+        },
+    
+        // Method to close the modal
+        closeModal() {
+          this.showModal = false;
+        },
       },
-      async fetchCommunities() {
-        try {
-          const response = await axios.get('/api/communities/');
-          this.communities = response.data;
-        } catch (error) {
-          console.error('Error fetching communities:', error);
-        }
-      },
-      closeModal() {
-        this.showModal = false;
-      },
-    },
-  };
-  </script>
-  
+    };
+    </script>
+    
   <style scoped>
   /* Modal Overlay */
   .modal-overlay {
@@ -194,7 +204,29 @@
   .create-btn:hover {
     background-color: #9b2bd3;
   }
-  
+
+  ul {
+  list-style-type: none; /* Remove bullet points */
+  padding: 0; /* Remove padding */
+  color: #eaeaea
+}
+
+li {
+  margin-bottom: 10px; /* Add space between list items */
+  font-size: 18px; /* Optional: Adjust text size */
+  padding-left: 5px; /* Optional: Add left padding */
+  color: #eaeaea
+}
+
+a {
+  color: #eaeaea; /* Ensure links are also dark gray */
+  text-decoration: none; /* Remove underline */
+}
+
+a:hover {
+  color: #d4d4d4; /* Optional: Change color of the link when hovered */
+}
+
   /* Add additional styling for responsive layouts */
   @media (max-width: 600px) {
     .modal-content {
