@@ -1,21 +1,31 @@
 <template>
     <div class="post-detail-container">
-      <h1>{{ post.title }}</h1>
-      <p>{{ post.description }}</p>
+      <!-- Display Author's Username above the Post Title -->
+      <div class="post-header">
+        <h3 class="author-username">
+          <span v-if="post.author_username">{{ post.author_username }}</span>
+          <span v-if="!post.author_username">Anonymous</span>
+        </h3>
+        <h1 class="post-title">{{ post.title }}</h1>
+      </div>
   
-      <!-- Replies Section -->
-      <div class="reply-section">
-        <h3>Replies</h3>
-        <div class="replies">
-          <div v-for="reply in post.replies" :key="reply.id" class="reply-item">
-            <p><strong>{{ reply.author.username }}:</strong> {{ reply.content }}</p>
+      <!-- Post Description Below the Title -->
+      <p class="post-description">{{ post.content }}</p>
+  
+      <!-- Comments Section -->
+      <div class="comment-section">
+        <h3>Comments</h3>
+        <div class="comments">
+          <div v-for="comment in post.comments" :key="comment.id" class="comment-item">
+            <!-- Display the author username or 'Anonymous' if no username exists -->
+            <p><strong>{{ comment.author_username ? comment.author_username : 'Anonymous' }}:</strong> {{ comment.content }}</p>
           </div>
         </div>
   
-        <!-- Reply Form -->
-        <form @submit.prevent="submitReply">
-          <textarea v-model="newReply" placeholder="Write a reply..." required></textarea>
-          <button type="submit">Submit Reply</button>
+        <!-- Comment Form -->
+        <form @submit.prevent="submitComment">
+          <textarea v-model="newComment" placeholder="Write a comment..." required></textarea>
+          <button type="submit">Submit Comment</button>
         </form>
       </div>
     </div>
@@ -29,7 +39,7 @@
     data() {
       return {
         post: {},         // To store the post details
-        newReply: '',     // To bind the new reply
+        newComment: '',   // To bind the new comment
       };
     },
     async created() {
@@ -37,38 +47,40 @@
       await this.fetchPost();
     },
     methods: {
-      // Fetch the post with its replies
       async fetchPost() {
         try {
-          console.log("Fetching post with ID:", this.postId);  // Log the postId
+          // Fetch the post with its comments
           const response = await axios.get(`/api/posts/${this.postId}`);
-          this.post = response.data; // Assuming the response contains post data
+          console.log("Fetched Post Data:", response.data);
   
-          // Ensure replies is always an array
-          if (!this.post.replies) {
-            this.post.replies = [];
-          }
+          this.post = response.data;
+  
+          // Log the comments and their author usernames to verify correct data
+          this.post.comments.forEach(comment => {
+            console.log(`Comment Author: ${comment.author_username}`);
+          });
+  
         } catch (error) {
           console.error('Error fetching post:', error);
         }
       },
   
-      // Submit the new reply
-      async submitReply() {
+      // Submit the new comment
+      async submitComment() {
         try {
           const response = await axios.post(`/api/posts/${this.postId}/comments`, {
-            content: this.newReply,
+            content: this.newComment,
           });
   
-          // Ensure replies is defined and then push the new reply
-          if (!this.post.replies) {
-            this.post.replies = [];
+          // Ensure comments is defined and then push the new comment
+          if (!this.post.comments) {
+            this.post.comments = [];
           }
   
-          this.post.replies.push(response.data); // Add the new reply to the list of replies
-          this.newReply = ''; // Clear the reply field
+          this.post.comments.push(response.data); // Add the new comment to the list of comments
+          this.newComment = ''; // Clear the comment field
         } catch (error) {
-          console.error('Error submitting reply:', error);
+          console.error('Error submitting comment:', error);
         }
       },
     },
@@ -83,17 +95,40 @@
     margin-left: 50px;
   }
   
-  .reply-section {
-    margin-top: 20px;
+  .post-header {
+    margin-bottom: 5px; /* Reduced the margin between author and title */
   }
   
-  .replies {
+  .author-username {
+    font-size: 1.2em;
+    color: #666;
+    font-weight: bold;
+    margin: 0; /* Remove margin to keep it closer to the post title */
+  }
+  
+  .post-title {
+    font-size: 2.5em;
+    color: #eaeaea;  /* Controls the color of the post title */
+    margin: 0; /* Remove margin to make it closer to the author's name */
+  }
+  
+  .post-description {
+    font-size: 1.2em;
+    color: #eaeaea;  /* Controls the color of the post content (description) */
+    margin-top: 10px; /* Reduced space between title and description */
+  }
+  
+  .comment-section {
+    margin-top: 30px;
+  }
+  
+  .comments {
     display: flex;
     flex-direction: column;
     margin-top: 10px;
   }
   
-  .reply-item {
+  .comment-item {
     margin-bottom: 10px;
     padding-left: 0px;
     text-align: left;
@@ -104,7 +139,7 @@
     margin-right: 20px;
   }
   
-  .reply-section form {
+  .comment-section form {
     margin-top: 10px;
   }
   

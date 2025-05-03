@@ -1,33 +1,43 @@
 import random
-
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 import json
-
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
-from .forms import CreateUserForm
-
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.decorators import login_required
-from .models import Resource, Product, Delivery, DeliveryResource, Notification, Post, Community, Comment
-from .serializers import ResourceSerializer, ProductSerializer, DeliverySerializer, PostSerializer, CommentSerializer, CommunitySerializer
-from django.core.mail import send_mail
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from django.template.loader import render_to_string, get_template
 from django.conf import settings
-from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
-from rest_framework import status
-
-from django.template.loader import get_template
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import viewsets
+from rest_framework.views import APIView
+
+# Forms
+from .forms import CreateUserForm
+
+# Models
+from .models import Resource, Product, Delivery, DeliveryResource, Notification, Post, Community, Comment
+
+# Serializers
+from .serializers import (
+    ResourceSerializer,
+    ProductSerializer,
+    DeliverySerializer,
+    PostSerializer,
+    CommentSerializer,
+    CommunitySerializer,
+)
+
+# Decorators
+from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods
+
+
 
 try:
     template = get_template('password-reset-email.html')
@@ -514,7 +524,7 @@ from .serializers import PostSerializer, CommentSerializer
 
 class PostViewSet(viewsets.ModelViewSet):
     print ('PostViewSet is hit!')
-    queryset = Post.objects.all()
+    queryset = Post.objects.all().select_related('author')
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]  
 
@@ -594,3 +604,16 @@ class PostViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
+
+class DeleteCommentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, post_id, comment_id):
+        try:
+            comment = Comment.objects.get(id=comment_id, post_id=post_id)
+            if comment.author != request.user:
+                return Response({"detail": "You do not have permission to delete this comment."}, status=status.HTTP_403_FORBIDDEN)
+            comment.delete()
+            return Response({"detail": "Comment deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except Comment.DoesNotExist:
+            return Response({"detail": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)

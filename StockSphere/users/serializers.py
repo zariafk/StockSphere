@@ -86,17 +86,18 @@ class CommunitySerializer(serializers.ModelSerializer):
         model = Community
         fields = ['id', 'name', 'description']
 
+class CommentSerializer(serializers.ModelSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    class Meta:
+        model = Comment
+        fields = ['id', 'content', 'created_at', 'author_username']
 
 class PostSerializer(serializers.ModelSerializer):
+    from .serializers import CommentSerializer
     community = serializers.PrimaryKeyRelatedField(queryset=Community.objects.all())  # Expect Community ID
+    comments = CommentSerializer(many=True, read_only=True)
+    author_username = serializers.CharField(source='author.username', read_only=True)
 
     class Meta:
         model = Post
-        fields = ['id', 'title', 'content', 'community', 'author', 'created_at']
-
-
-
-class CommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = '__all__'
+        fields = ['id', 'title', 'content', 'community', 'author', 'created_at', 'comments', 'author_username']
