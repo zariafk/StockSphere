@@ -49,4 +49,6 @@ urlpatterns = [
     path('api/notifications/<int:notification_id>/read', views.mark_notification_as_read, name='mark_notification_as_read'), 
 
     path('api/', include(router.urls)),
+    path('api/posts/<int:pk>', PostViewSet.as_view({'get': 'retrieve'}), name='post-detail'),
+    path('api/posts/<int:pk>/comments', PostViewSet.as_view({'post': 'comment'}), name='post-comments'),
 ]

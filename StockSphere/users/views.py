@@ -505,33 +505,91 @@ class CommunityViewSet(viewsets.ModelViewSet):
         # Automatically set the 'created_by' field to the currently authenticated user
         serializer.save(created_by=self.request.user)
 
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from .models import Post, Comment
+from .serializers import PostSerializer, CommentSerializer
+
 class PostViewSet(viewsets.ModelViewSet):
-    print("PostViewSet Hit!")
+    print ('PostViewSet is hit!')
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]  
 
+    def retrieve(self, request, *args, **kwargs):
+        print("Retrieve method hit!")  # Log if the retrieve method is hit
+        return super().retrieve(request, *args, **kwargs)
+
+    # Default create method provided by DRF, but you can modify it if you need
     def create(self, request, *args, **kwargs):
+        # Print the user data
         print("create inside PostViewSet Hit!")
         if request.user.is_authenticated:
-            print(f"Authenticated User: {request.user.username}")  # Print the authenticated user's username
+            print(f"Authenticated User: {request.user.username}")  # Log the authenticated user's username
         else:
-            print("User is not authenticated!")  # Print if the user is not authenticated
+            print("User is not authenticated!")  # Log if the user is not authenticated
+
         # Manually set the 'author' field to the current logged-in user
         data = request.data.copy()  # Make a copy to modify
         data['author'] = request.user.id  # Add the author field
-        data['community'] = int(data.get('community'))
-        print(f"Post Data: {data}")  # Print data to verify if 'author' is being set correctly
+        data['community'] = int(data.get('community'))  # Ensure community ID is an integer
+
+        print(f"Post Data: {data}")  # Log data to verify if 'author' is being set correctly
 
         # Pass the modified data to the serializer
         serializer = self.get_serializer(data=data)
-        
+
         if serializer.is_valid():
-            serializer.save()  # Save the post
+            # Create the post instance and save
+            self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            print(f"Serializer errors: {serializer.errors}")  # Print the serializer errors
+            print(f"Serializer errors: {serializer.errors}")  # Log serializer errors if validation fails
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_object(self):
+        post_id = self.kwargs.get('pk')  # Get the post ID from the URL
+        print(f"Fetching post with ID: {post_id}")  # Log the ID
+        
+        try:
+            obj = Post.objects.get(id=post_id)  # Explicitly query the database for the post
+            print(f"Retrieved post: {obj}")  # Print the retrieved post object
+        except Post.DoesNotExist:
+            print(f"Post with ID {post_id} does not exist.")  # Log if post does not exist
+            raise  # Let the default DRF exception handler catch this and return a 404
+
+        return obj
+    
+    # Action to get the post and its comments (replies)
+    @action(detail=True, methods=['get'])
+    def comments(self, request, pk=None):
+        post = self.get_object()  # Get the specific post
+        comments = Comment.objects.filter(post=post)  # Get comments related to the post
+        serializer = CommentSerializer(comments, many=True)  # Serialize the comments
+        return Response(serializer.data)  # Return comments as a response
+
+    # Action to create a new comment (reply) to a post
+    @action(detail=True, methods=['post'])
+    def comment(self, request, pk=None):
+        post = self.get_object()  # Get the post to which the comment is being added
+        content = request.data.get('content', '')  # Get the content of the comment
+        
+        # Ensure content is not empty
+        if not content:
+            return Response({"detail": "Content cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create the new comment
+        comment = Comment.objects.create(
+            post=post,  # Associate the comment with the post
+            author=request.user,  # Set the current logged-in user as the author
+            content=content  # The content of the comment
+        )
+        
+        # Serialize and return the newly created comment
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()

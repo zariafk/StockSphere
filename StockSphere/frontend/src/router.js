@@ -10,6 +10,8 @@ import Deliveries from './pages/Deliveries.vue'
 import ForumList from './pages/ForumList.vue'
 import CommunityPosts from './pages/CommunityPosts.vue'
 import CreatePost from './pages/CreatePost.vue'
+import PostDetail from './pages/PostDetail.vue';
+
 
 const routes = [
   {
@@ -79,6 +81,12 @@ const routes = [
     path: '/forum/:communityId/post/create',
     name: 'CreatePost',
     component: CreatePost,
+    props: true,
+  },
+  {
+    path: '/forum/:communityId/post/:postId',
+    name: 'PostDetail',
+    component: PostDetail,
     props: true,
   }
 ]

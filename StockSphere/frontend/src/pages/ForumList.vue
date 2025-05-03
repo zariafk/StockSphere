@@ -47,6 +47,7 @@
     export default {
       data() {
         return {
+          isLoading: false,
           communities: [],  // List of communities to display
           showModal: false,  // Controls visibility of the modal for creating a new community
           community: {
