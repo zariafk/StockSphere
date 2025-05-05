@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Resource, Product, Delivery, DeliveryResource
+from .models import Resource, Product, Delivery, DeliveryResource, Post, Community, Comment
 
 class ResourceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -80,3 +80,24 @@ def update(self, instance, validated_data):
 
     return instance
 
+
+class CommunitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Community
+        fields = ['id', 'name', 'description']
+
+class CommentSerializer(serializers.ModelSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    class Meta:
+        model = Comment
+        fields = ['id', 'content', 'created_at', 'author_username']
+
+class PostSerializer(serializers.ModelSerializer):
+    from .serializers import CommentSerializer
+    community = serializers.PrimaryKeyRelatedField(queryset=Community.objects.all())  # Expect Community ID
+    comments = CommentSerializer(many=True, read_only=True)
+    author_username = serializers.CharField(source='author.username', read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'content', 'community', 'author', 'created_at', 'comments', 'author_username']

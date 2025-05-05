@@ -1,29 +1,43 @@
 import random
-
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 import json
-
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
-from .forms import CreateUserForm
-
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.decorators import login_required
-from .models import Resource, Product, Delivery, DeliveryResource, Notification
-from .serializers import ResourceSerializer, ProductSerializer, DeliverySerializer
-from django.core.mail import send_mail
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from django.template.loader import render_to_string, get_template
 from django.conf import settings
-from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from django.template.loader import get_template
+# Forms
+from .forms import CreateUserForm
+
+# Models
+from .models import Resource, Product, Delivery, DeliveryResource, Notification, Post, Community, Comment
+
+# Serializers
+from .serializers import (
+    ResourceSerializer,
+    ProductSerializer,
+    DeliverySerializer,
+    PostSerializer,
+    CommentSerializer,
+    CommunitySerializer,
+)
+
+# Decorators
+from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods
+
+
 
 try:
     template = get_template('password-reset-email.html')
@@ -469,7 +483,7 @@ def update_delivery(request, delivery_id):
                     cases=res_data['cases']
                 )
 
-        # ✅ Re-serialize and return updated delivery
+        # Re-serialize and return updated delivery
         updated_delivery_data = DeliverySerializer(delivery).data
 
         return JsonResponse(updated_delivery_data, status=200)
@@ -477,7 +491,6 @@ def update_delivery(request, delivery_id):
     except Exception as e:
         print('Error in update_delivery:', e)
         return JsonResponse({'error': str(e)}, status=500)
-
 
 
 
@@ -491,3 +504,116 @@ def delete_delivery(request, delivery_id):
         return JsonResponse({'message': 'Deleted successfully'}, status=204)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
+
+class CommunityViewSet(viewsets.ModelViewSet):
+    queryset = Community.objects.all()
+    serializer_class = CommunitySerializer
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+    
+    def perform_create(self, serializer):
+        # Automatically set the 'created_by' field to the currently authenticated user
+        serializer.save(created_by=self.request.user)
+
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from .models import Post, Comment
+from .serializers import PostSerializer, CommentSerializer
+
+class PostViewSet(viewsets.ModelViewSet):
+    print ('PostViewSet is hit!')
+    queryset = Post.objects.all().select_related('author')
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]  
+
+    def retrieve(self, request, *args, **kwargs):
+        print("Retrieve method hit!")  # Log if the retrieve method is hit
+        return super().retrieve(request, *args, **kwargs)
+
+    # Default create method provided by DRF, but you can modify it if you need
+    def create(self, request, *args, **kwargs):
+        # Print the user data
+        print("create inside PostViewSet Hit!")
+        if request.user.is_authenticated:
+            print(f"Authenticated User: {request.user.username}")  # Log the authenticated user's username
+        else:
+            print("User is not authenticated!")  # Log if the user is not authenticated
+
+        # Manually set the 'author' field to the current logged-in user
+        data = request.data.copy()  # Make a copy to modify
+        data['author'] = request.user.id  # Add the author field
+        data['community'] = int(data.get('community'))  # Ensure community ID is an integer
+
+        print(f"Post Data: {data}")  # Log data to verify if 'author' is being set correctly
+
+        # Pass the modified data to the serializer
+        serializer = self.get_serializer(data=data)
+
+        if serializer.is_valid():
+            # Create the post instance and save
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            print(f"Serializer errors: {serializer.errors}")  # Log serializer errors if validation fails
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_object(self):
+        post_id = self.kwargs.get('pk')  # Get the post ID from the URL
+        print(f"Fetching post with ID: {post_id}")  # Log the ID
+        
+        try:
+            obj = Post.objects.get(id=post_id)  # Explicitly query the database for the post
+            print(f"Retrieved post: {obj}")  # Print the retrieved post object
+        except Post.DoesNotExist:
+            print(f"Post with ID {post_id} does not exist.")  # Log if post does not exist
+            raise  # Let the default DRF exception handler catch this and return a 404
+
+        return obj
+    
+    # Action to get the post and its comments (replies)
+    @action(detail=True, methods=['get'])
+    def comments(self, request, pk=None):
+        post = self.get_object()  # Get the specific post
+        comments = Comment.objects.filter(post=post)  # Get comments related to the post
+        serializer = CommentSerializer(comments, many=True)  # Serialize the comments
+        return Response(serializer.data)  # Return comments as a response
+
+    # Action to create a new comment (reply) to a post
+    @action(detail=True, methods=['post'])
+    def comment(self, request, pk=None):
+        post = self.get_object()  # Get the post to which the comment is being added
+        content = request.data.get('content', '')  # Get the content of the comment
+        
+        # Ensure content is not empty
+        if not content:
+            return Response({"detail": "Content cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create the new comment
+        comment = Comment.objects.create(
+            post=post,  # Associate the comment with the post
+            author=request.user,  # Set the current logged-in user as the author
+            content=content  # The content of the comment
+        )
+        
+        # Serialize and return the newly created comment
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+
+class DeleteCommentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, post_id, comment_id):
+        try:
+            comment = Comment.objects.get(id=comment_id, post_id=post_id)
+            if comment.author != request.user:
+                return Response({"detail": "You do not have permission to delete this comment."}, status=status.HTTP_403_FORBIDDEN)
+            comment.delete()
+            return Response({"detail": "Comment deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except Comment.DoesNotExist:
+            return Response({"detail": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)

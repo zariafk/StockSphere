@@ -7,6 +7,11 @@ import Resources from './pages/Resources.vue'
 import Products from './pages/Products.vue'
 import Planning from './pages/Planning.vue'
 import Deliveries from './pages/Deliveries.vue'
+import ForumList from './pages/ForumList.vue'
+import CommunityPosts from './pages/CommunityPosts.vue'
+import CreatePost from './pages/CreatePost.vue'
+import PostDetail from './pages/PostDetail.vue';
+
 
 const routes = [
   {
@@ -60,6 +65,29 @@ const routes = [
     path: '/reset/:uid/:token',
     name: 'reset-password',
     component: () => import('./pages/ResetPassword.vue'),
+  },
+  {
+    path: '/forum',
+    name: 'ForumList',
+    component: ForumList,
+  },
+  {
+    path: '/forum/:communityId',
+    name: 'CommunityPosts',
+    component: CommunityPosts,
+    props: true,
+  },
+  {
+    path: '/forum/:communityId/post/create',
+    name: 'CreatePost',
+    component: CreatePost,
+    props: true,
+  },
+  {
+    path: '/forum/:communityId/post/:postId',
+    name: 'PostDetail',
+    component: PostDetail,
+    props: true,
   }
 ]
 
