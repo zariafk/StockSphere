@@ -17,17 +17,17 @@
       <div class="features-container">
         <div class="feature-item">
             <h3>Inventory Management</h3>
-            <img class="feature-icon" src="./icons/inventory_management.png" alt="Inventory Management Icon" />
+            <img class="feature-icon" src="../assets/clipboard.png" alt="Inventory Management Icon" />
             <p>Keep track of stock, products and deliveries.</p>
         </div>
         <div class="feature-item">
             <h3>Sales Forecasting</h3>
-            <img class="feature-icon" src="./icons/sales_forecasting.png" alt="Sales Forecasting Icon" />
+            <img class="feature-icon" src="../assets/graph.png" alt="Sales Forecasting Icon" />
             <p>Input sales data to see predictions about future sales.</p>
         </div>
         <div class="feature-item">
             <h3>Communications</h3>
-            <img class="feature-icon" src="./icons/communications.png" alt="Communications Icon" />
+            <img class="feature-icon" src="../assets/envelope.png" alt="Communications Icon" />
             <p>Communicate both internally and externally.</p>
         </div>
       </div>

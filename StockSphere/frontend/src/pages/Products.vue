@@ -192,12 +192,13 @@
 </template>
 
 <script setup>
+  import Chart from "chart.js/auto";
+
   import { ref, computed, onMounted, nextTick } from 'vue';
   import { PencilLine, Trash2, Info, Edit, X } from "lucide-vue-next";
   import { useResourceStore } from "../store/resources";
   import { useProductStore } from "../store/products";
   import { useNotificationStore } from '../store/notifications';
-  import Chart from "chart.js/auto";
   import { useAuthStore } from '../store/auth';  
   
   // Stores
@@ -605,31 +606,31 @@
     // Step 5.1: Render line graph for sales trends forecasting
     if (ctx1) {
       salesForecastChartInstance.value = new Chart(ctx1, {
-        type: "line",
+        type: "line", // Line chart type
         data: {
-          labels: formattedLabels,
+          labels: formattedLabels, // X-axis labels (months)
           datasets: [
             {
-              label: "Real Sales",
+              label: "Real Sales", // Actual Sales
               data: [...realSalesUnits, ...Array(trimmedForecastUnits.length + 1).fill(null)],
-              borderColor: "rgba(75, 192, 192, 1)",
+              borderColor: "rgba(75, 192, 192, 1)", // line colour
               borderWidth: 2,
               fill: false,
-              tension: 0.4,
+              tension: 0.4, // Smooth curve
             },
             {
-              label: "Projected Sales",
-              data: paddedForecast,
-              borderColor: "rgba(255, 99, 132, 1)",
+              label: "Projected Sales", // Sales forecast
+              data: paddedForecast, // Date points for forecasted sales
+              borderColor: "rgba(255, 99, 132, 1)", // Line colour for forecasted sales
               borderWidth: 2,
               fill: false,
-              tension: 0.4,
-              borderDash: [5, 5],
+              tension: 0.4, // Smooth curve
+              borderDash: [5, 5], // Dashed line for forecast
             },
           ],
         },
         options: {
-          responsive: true,
+          responsive: true, // Make the chart responsive
           maintainAspectRatio: false,
         },
       });
