@@ -154,7 +154,7 @@
   
   button {
     padding: 10px 20px;
-    background-color: #4CAF50;
+    background-color: #b43de6;
     color: white;
     border: none;
     border-radius: 5px;
@@ -162,7 +162,7 @@
   }
   
   button:hover {
-    background-color: #45a049;
+    background-color: #9b2bd3;
   }
   </style>
   
