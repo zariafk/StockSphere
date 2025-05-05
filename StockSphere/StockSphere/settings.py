@@ -54,7 +54,7 @@ CSRF_TRUSTED_ORIGINS = ['http://localhost:5173','http://127.0.0.1:8000']
 
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True  # This MUST be True when SameSite=None
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SECURE = True
 
 MIDDLEWARE = [
@@ -165,9 +165,6 @@ LOGGING = {
         },
     },
 }
-
-
-
 
 
 

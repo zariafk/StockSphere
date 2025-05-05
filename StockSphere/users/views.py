@@ -46,6 +46,10 @@ except Exception as e:
     print("Error: ", e)
 
 
+from django.http import HttpResponse
+def home(request):
+    return HttpResponse("Welcome to the StockSphere API!")
+
 # AUTHENTICATION
 @ensure_csrf_cookie
 @require_http_methods(['GET'])
