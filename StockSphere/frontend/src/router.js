@@ -18,6 +18,7 @@ const routes = [
     path: '/',
     name: 'landing',
     component: Landing,
+    meta: { hideTabs: true }
   },
   {
     path: '/dashboard',
@@ -60,6 +61,7 @@ const routes = [
     path: '/forgot-password',
     name: 'forgot-password',
     component: () => import ('./pages/ForgotPassword.vue'),
+    meta: {hideTabs: true }
   },
   {
     path: '/reset/:uid/:token',
