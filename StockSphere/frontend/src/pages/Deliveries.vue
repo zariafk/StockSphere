@@ -234,7 +234,6 @@
     
   
   <style scoped>
-  /* Use your familiar style structure like Planning.vue */
   .deliveries-container {
     color: #eaeaea;
     margin-top: 100px;
@@ -317,11 +316,11 @@
   }
   .submit-button, .close-button, .add-row {
     padding: 8px 16px;
-    border: none;
     border-radius: 5px;
   }
   .submit-button {
     background-color: #b43de6;
+    border: none;
     color: white;
   }
   .close-button {
@@ -330,10 +329,11 @@
     color: white;
   }
   .resource-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+    border: 2px #b43de6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
 .resource-row select,
