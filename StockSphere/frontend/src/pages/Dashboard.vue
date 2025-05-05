@@ -29,8 +29,12 @@
     import { watch, onMounted } from 'vue';
     import { useAuthStore } from '../store/auth';
     import { useNotificationStore } from '../store/notifications';
-  
-    const authStore = useAuthStore();
+    // In Dashboard.vue
+import { getCSRFToken } from '../store/auth'; // Adjust the path based on where your auth.js is located
+import { useRouter } from 'vue-router';
+
+    const router = useRouter();
+   const authStore = useAuthStore();
     const notificationStore = useNotificationStore();
   
     let notificationsFetched = false; // Flag to check if notifications have been fetched already
@@ -70,6 +74,10 @@
         console.error('Error fetching notifications:', error);
       }
     };
+
+    const logout = async () => {
+  await authStore.logout(router);
+    }
   
     const markAsRead = async (notificationId) => {
   console.log(`Marking notification with ID ${notificationId} as read`);
