@@ -5,6 +5,11 @@
     <!-- Show a loading message or spinner while posts are being fetched -->
     <p v-if="isLoading">Loading posts...</p>
 
+        <!-- Create Post Button aligned to the left -->
+    <router-link :to="`/forum/${communityId}/post/create`" class="create-post-btn">
+      Create a Post
+    </router-link>
+
     <ul v-if="!isLoading">
       <li v-for="post in posts" :key="post.id">
         <!-- Display the author username next to the post title -->
@@ -13,11 +18,6 @@
         </router-link>
       </li>
     </ul>
-
-    <!-- Create Post Button aligned to the left -->
-    <router-link :to="`/forum/${communityId}/post/create`" class="create-post-btn">
-      Create a Post
-    </router-link>
   </div>
 </template>
 

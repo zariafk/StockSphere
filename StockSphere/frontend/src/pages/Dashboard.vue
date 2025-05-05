@@ -1,6 +1,15 @@
 <template>
     <div class="dashboard-container">
       <h1>Dashboard</h1>
+
+            <!-- User Section -->
+            <div v-if="authStore.isAuthenticated">
+              <h2>Hello {{ authStore.user?.username }}!</h2>
+              <button @click="logout">Logout</button>
+            </div>
+            <p v-else>
+              You are not logged in. <router-link to="/login">Login</router-link>
+            </p>
   
       <!-- Notifications Section -->
       <div v-if="notificationStore.notifications.length">
@@ -14,14 +23,7 @@
         <p>No new notifications.</p>
       </div>
   
-      <!-- User Section -->
-      <div v-if="authStore.isAuthenticated">
-        <h2>Hello {{ authStore.user?.username }}!</h2>
-        <button @click="logout">Logout</button>
-      </div>
-      <p v-else>
-        You are not logged in. <router-link to="/login">Login</router-link>
-      </p>
+
     </div>
   </template>
   
@@ -135,10 +137,6 @@ import { useRouter } from 'vue-router';
   
     .notification-message {
       margin-right: 10px;  /* Add space between the message and button */
-    }
-  
-    .mark-read-button {
-      cursor: pointer;
     }
   </style>
   
