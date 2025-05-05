@@ -2,7 +2,7 @@ import random
 import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
@@ -46,18 +46,16 @@ except Exception as e:
     print("Error: ", e)
 
 
+from django.http import HttpResponse
+def home(request):
+    return HttpResponse("Welcome to the StockSphere API!")
+
 # AUTHENTICATION
 @ensure_csrf_cookie
 @require_http_methods(['GET'])
 def set_csrf_token(request):
     return JsonResponse({'message': 'CSRF cookie set'})
 
-from django.http import JsonResponse
-from django.contrib.auth.forms import PasswordResetForm
-from django.core.mail import send_mail
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth import get_user_model
 
 def password_reset_request(request):
     if request.method == "POST":

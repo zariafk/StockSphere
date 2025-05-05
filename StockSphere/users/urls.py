@@ -10,6 +10,8 @@ router.register(r'posts', PostViewSet)
 router.register(r'comments', CommentViewSet)
 
 urlpatterns = [
+    path('', views.home, name='home'),
+    
     # AUTHENTICATION endpoints
     path('api/set-csrf-token', views.set_csrf_token, name='set_csrf_token'),
     path('api/login', views.login_view, name='login'),

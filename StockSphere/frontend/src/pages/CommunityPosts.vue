@@ -51,10 +51,10 @@
 
 <style scoped>
   .posts-container {
-    margin-top: 100px; /* Adjust this value according to your app bar height */
-    margin-left: 70px; /* Move content to the right */
-    padding-right: 20px; /* Optional: padding for better spacing */
-    text-align: left; /* Align everything to the left */
+    margin-top: 100px; 
+    margin-left: 70px; 
+    padding-right: 20px; 
+    text-align: left; 
   }
 
   h1 {
@@ -66,14 +66,14 @@
     padding-left: 10px;
     margin-left: 10px;
     margin-top: 30px;
-    text-align: left; /* Align the list to the left */
+    text-align: left; 
   }
 
   .create-post-btn {
     display: inline-block;
     margin-top: 20px;
     padding: 10px 20px;
-    background-color: #4CAF50;
+    background-color: #b43de6;
     color: white;
     text-decoration: none;
     border-radius: 5px;
@@ -81,6 +81,6 @@
   }
 
   .create-post-btn:hover {
-    background-color: #45a049;
+    background-color: #9b2bd3;
   }
 </style>
