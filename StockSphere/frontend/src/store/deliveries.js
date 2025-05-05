@@ -96,18 +96,15 @@ export const useDeliveriesStore = defineStore('deliveries', {
         console.error('Failed to add delivery', err)
       }
     },
-    
-    updateDelivery(index, updatedDelivery) {
-      // Find the delivery to update
-      const deliveryToUpdate = this.deliveries[index];
-      if (deliveryToUpdate) {
-        // Update the delivery in the state with the updated data
-        this.deliveries[index] = {
-          ...deliveryToUpdate,
-          ...updatedDelivery,
-        };
-      }
-    },
+
+updateDelivery(index, updatedDelivery) {
+  const deliveryToUpdate = this.deliveries[index];
+  if (deliveryToUpdate) {
+    // Here, we update the delivery in the local store with the updated data
+    this.deliveries[index] = { ...deliveryToUpdate, ...updatedDelivery };
+  }
+},
+
 
     async deleteDelivery(index) {
       const delivery = this.deliveries[index]

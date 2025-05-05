@@ -119,6 +119,7 @@
   import { useResourceStore } from '../store/resources'
   import { useDeliveriesStore } from '../store/deliveries'
   import { PencilLine, Trash2 } from 'lucide-vue-next'
+  import { getCSRFToken } from '../store/auth'
   
   const resourceStore = useResourceStore()
   const deliveriesStore = useDeliveriesStore()
@@ -185,27 +186,43 @@
   }
   
   const saveDelivery = async () => {
-    const payload = {
-      from_location: from.value,
-      notes: notes.value,
-      resources: resourceUsages.value
-        .filter(r => r.resourceId && r.cases)
-        .map(r => ({
-          resource: r.resourceId,
-          cases: r.cases
-        })),
-      completed: false
+  const payload = {
+    from_location: from.value,
+    notes: notes.value,
+    resources: resourceUsages.value
+      .filter(r => r.resourceId && r.cases)
+      .map(r => ({
+        resource: r.resourceId,
+        cases: r.cases
+      })),
+    completed: false // Ensure completed status is passed correctly
+  };
+
+  // If in edit mode, update the existing delivery in the store and backend
+  if (editMode.value && editingIndex.value !== null) {
+    deliveriesStore.updateDelivery(editingIndex.value, payload);  // Update local state
+    // Call the backend API to update the delivery
+    const res = await fetch(`http://localhost:8000/api/deliveries/${deliveriesStore.deliveries[editingIndex.value].id}/update`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken(),
+      },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      await deliveriesStore.fetchDeliveries();  // Refresh the deliveries list
     }
-  
-    if (editMode.value && editingIndex.value !== null) {
-      deliveriesStore.updateDelivery(editingIndex.value, payload)
-    } else {
-      await deliveriesStore.addDelivery(payload)
-      await deliveriesStore.fetchDeliveries()
-    }
-  
-    closeModal()
+  } else {
+    // If adding a new delivery, use the addDelivery method
+    await deliveriesStore.addDelivery(payload);
+    await deliveriesStore.fetchDeliveries();
   }
+
+  closeModal();  // Close the modal after saving
+};
+
   
   const deleteDelivery = async (i) => {
     await deliveriesStore.deleteDelivery(i)
@@ -217,14 +234,27 @@
   }
   
   const startEdit = (i) => {
-    const d = deliveriesStore.deliveries[i]
-    from.value = d.from_location
-    notes.value = d.notes
-    resourceUsages.value = JSON.parse(JSON.stringify(d.resources))
-    editingIndex.value = i
-    editMode.value = true
-    showModal.value = true
-  }
+  const d = deliveriesStore.deliveries[i]; // Get the delivery to edit
+  
+  // Make sure data exists for the selected delivery
+  if (!d) return;
+
+  // Pre-fill the basic fields with current delivery data
+  from.value = d.from_location;
+  notes.value = d.notes;
+
+  // Pre-fill the resource usage rows
+  resourceUsages.value = d.resources.map(res => ({
+    resourceId: res.resourceId || '',  // Ensure resourceId is set
+    cases: res.cases || 1              // Ensure cases have a default value if missing
+  }));
+
+  // Set edit mode and the editing index
+  editMode.value = true;
+  editingIndex.value = i;
+  showModal.value = true;  // Open the modal for editing
+};
+
   
   const markCompleted = async (i) => {
     await deliveriesStore.markAsCompleted(i)
