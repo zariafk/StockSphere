@@ -1,22 +1,26 @@
 from rest_framework import serializers
 from .models import Resource, Product, Delivery, DeliveryResource, Post, Community, Comment
 
+# Serializer for resource model
 class ResourceSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Resource
+        model = Resource # Specify model to serialize
+        # Fields to include
         fields = [
             'id', 'name', 'price_per_pack', 'units_per_pack', 
             'unit_price', 'available_units', 'arriving_units', 'notes', 'created_at'
         ]
 
+# Serializer for product model
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = '__all__' # Include all fields in the product model
         extra_kwargs = {
-            'user': {'required': False}  # <- Make 'user' not required
+            'user': {'required': False}  
         }
 
+    # Validate resource usages
     def validate_resource_usages(self, value):
         if not isinstance(value, list):
             raise serializers.ValidationError("resource_usages must be a list.")
@@ -29,6 +33,7 @@ class ProductSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("'units' must be a positive number.")
         return value
     
+    # Validate sales forecast to ensure they have required attributes.
     def validate_sales_forecast(self, value):
         if not isinstance(value, list):
             raise serializers.ValidationError("sales_forecast must be a list.")
@@ -42,15 +47,16 @@ class ProductSerializer(serializers.ModelSerializer):
                 if 'startDate' not in period or 'endDate' not in period:
                     raise serializers.ValidationError("Each period must include 'startDate' and 'endDate'.")
         return value
-
-
-
+    
+# Serializer for DeliveryResource model
 class DeliveryResourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeliveryResource
         fields = ['id', 'resource', 'cases']
 
+# Serializer for Delivery model
 class DeliverySerializer(serializers.ModelSerializer):
+    # Include DeliveryResource serializer to serialize resources related to this delivery
     resources = DeliveryResourceSerializer(many=True)
 
     class Meta:
@@ -64,34 +70,37 @@ class DeliverySerializer(serializers.ModelSerializer):
             DeliveryResource.objects.create(delivery=delivery, **resource_data)
         return delivery
 
-def update(self, instance, validated_data):
-    resources_data = validated_data.pop('resources', None)
+    def update(self, instance, validated_data):
+        resources_data = validated_data.pop('resources', None)
 
-    instance.from_location = validated_data.get('from_location', instance.from_location)
-    instance.notes = validated_data.get('notes', instance.notes)
-    instance.completed = validated_data.get('completed', instance.completed)
-    instance.save()
+        instance.from_location = validated_data.get('from_location', instance.from_location)
+        instance.notes = validated_data.get('notes', instance.notes)
+        instance.completed = validated_data.get('completed', instance.completed)
+        instance.save()
 
-    # 🛠 Only update resources if new ones were actually provided
-    if resources_data is not None:
-        instance.resources.all().delete()
-        for resource_data in resources_data:
-            DeliveryResource.objects.create(delivery=instance, **resource_data)
+        # Only update resources if new ones were actually provided
+        if resources_data is not None:
+            instance.resources.all().delete()
+            for resource_data in resources_data:
+                DeliveryResource.objects.create(delivery=instance, **resource_data)
 
-    return instance
+        return instance
 
 
+# Serializer for community model
 class CommunitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
         fields = ['id', 'name', 'description']
 
+# Serializer for comment model
 class CommentSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     class Meta:
         model = Comment
         fields = ['id', 'content', 'created_at', 'author_username']
 
+# Serializer for post model
 class PostSerializer(serializers.ModelSerializer):
     from .serializers import CommentSerializer
     community = serializers.PrimaryKeyRelatedField(queryset=Community.objects.all())  # Expect Community ID

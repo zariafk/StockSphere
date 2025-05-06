@@ -3,7 +3,8 @@
       <h1>Deliveries <button class="add-btn" @click="openAddModal">+</button></h1>
   
       <button class="modal-button" @click="showPastModal = true">Past Deliveries</button>
-  
+      
+      <!-- Table for listing current deliveries -->
       <table class="deliveries-table">
         <thead>
           <tr>
@@ -19,6 +20,7 @@
           </tr>
         </thead>
         <tbody>
+          <!-- Loop through current deliveries -->
           <tr v-for="(delivery, index) in deliveriesStore.deliveries" :key="index">
             <td>{{ index + 1 }}</td>
             <td>{{ delivery.from }}</td>
@@ -29,6 +31,7 @@
             <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ fmtGBP(getCost(res.resourceId, res.cases)) }}</div></td>
             <td>{{ delivery.notes }}</td>
             <td>
+              <!-- Actions -->
               <PencilLine class="icon-button edit" @click="startEdit(index)" />
               <Trash2 class="icon-button delete" @click="deleteDelivery(index)" />
               <input type="checkbox" @change="markCompleted(index)" />
@@ -37,10 +40,10 @@
         </tbody>
       </table>
   
-      <!-- Add/Edit Modal -->
+      <!-- Add/edit modal -->
       <div v-if="showModal" class="modal-overlay">
         <div class="modal">
-          <h2>{{ editMode ? 'Edit Delivery' : 'Add New Delivery' }}</h2>
+          <h2>Add new delivery</h2>
           <div class="grid-container">
             <div class="form-group">
               <label>Where From?</label>
@@ -79,6 +82,7 @@
           <table class="deliveries-table">
             <thead>
               <tr>
+                <!-- Table to list past deliveries -->
                 <th>#</th>
                 <th>From</th>
                 <th>Total Cost</th>
@@ -91,6 +95,7 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Loop through past deliveries -->
               <tr v-for="(delivery, index) in deliveriesStore.pastDeliveries" :key="index">
                 <td>{{ index + 1 }}</td>
                 <td>{{ delivery.from }}</td>
@@ -112,35 +117,39 @@
         </div>
       </div>
     </div>
-  </template>
+</template>
   
-  <script setup>
+<script setup>
   import { ref, onMounted } from 'vue'
   import { useResourceStore } from '../store/resources'
   import { useDeliveriesStore } from '../store/deliveries'
-  import { PencilLine, Trash2 } from 'lucide-vue-next'
+  import { Trash2 } from 'lucide-vue-next'
   import { getCSRFToken } from '../store/auth'
   
   const resourceStore = useResourceStore()
   const deliveriesStore = useDeliveriesStore()
   
   onMounted(async () => {
-    await resourceStore.fetchResources()
-    await deliveriesStore.fetchDeliveries()
+    await resourceStore.fetchResources() // Fetch resources from the store
+    await deliveriesStore.fetchDeliveries() // Fetch deliveries from the store
   })
   
+  // Modal visibility and state
   const showModal = ref(false)
   const showPastModal = ref(false)
   const editMode = ref(false)
   const editingIndex = ref(null)
   
+  // Form data
   const from = ref('')
   const notes = ref('')
   const resourceUsages = ref([{ resourceId: '', cases: 1 }])
   
+  // Add/remove resource rows in the form
   const addResourceRow = () => resourceUsages.value.push({ resourceId: '', cases: 1 })
   const removeResourceRow = (i) => resourceUsages.value.splice(i, 1)
   
+  // Reset form data after close or submit
   const resetForm = () => {
     from.value = ''
     notes.value = ''
@@ -149,16 +158,19 @@
     editingIndex.value = null
   }
   
+  // Open the modal for adding a new delivery
   const openAddModal = () => {
     resetForm()
     showModal.value = true
   }
   
+  // Close the modal
   const closeModal = () => {
     showModal.value = false
     resetForm()
   }
   
+  // Helper function to get resource details
   const getResourceName = (id) => {
     const res = resourceStore.resources.find(r => r.id === id)
     return res ? res.name : 'Unknown'
@@ -174,6 +186,7 @@
     return res ? res.unit_price * res.units_per_pack * cases : 0
   }
   
+  // Calculate the total cost in GBP currency 
   const calculateTotal = (items) => {
     return items.reduce((sum, r) => sum + getCost(r.resourceId, r.cases), 0)
   }
@@ -186,102 +199,40 @@
   }
   
   const saveDelivery = async () => {
-  const payload = {
-    from_location: from.value,
-    notes: notes.value || '',  // Make sure notes are included (allow empty string)
-    resources: resourceUsages.value
-      .filter(r => r.resourceId && r.cases)
-      .map(r => ({
-        resource: r.resourceId,  // Ensure this is a valid resource ID
-        cases: r.cases  // Ensure this is a positive number
-      })),
-    completed: false
-  };
-
-  if (editMode.value && editingIndex.value !== null) {
-    const originalDelivery = deliveriesStore.deliveries[editingIndex.value];
-
-    // Update arriving_units for resources based on the difference between old and new
-    originalDelivery.resources.forEach(originalResource => {
-      const updatedResource = payload.resources.find(r => r.resource === originalResource.resource);
-
-      if (updatedResource) {
-        const oldUnits = originalResource.cases * originalResource.unitsPerPack;
-        const newUnits = updatedResource.cases * updatedResource.unitsPerPack;
-
-        // Ensure the arriving_units are correctly updated
-        deliveriesStore.updateResource(originalResource.resource, {
-          arriving_units: resourceStore.resources.find(r => r.id === originalResource.resource).arriving_units - oldUnits + newUnits
-        });
-      }
-    });
-
-    // Send PUT request to update the delivery
-    const response = await fetch(`http://localhost:8000/api/deliveries/${originalDelivery.id}/update`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCSRFToken(),
-      },
-      credentials: 'include',
-      body: JSON.stringify(payload),
-    });
-
-    if (response.ok) {
-      const updatedDelivery = await response.json();
-      // Update the delivery in the local store
-      deliveriesStore.deliveries[editingIndex.value] = updatedDelivery;
-    } else {
-      const errorDetails = await response.json();
-      console.error('Failed to update delivery:', errorDetails);
+    const payload = {
+      from_location: from.value,
+      notes: notes.value,
+      resources: resourceUsages.value
+        .filter(r => r.resourceId && r.cases)
+        .map(r => ({
+          resource: r.resourceId,
+          cases: r.cases
+        })),
+      completed: false
     }
-  } else {
-    // Handle adding a new delivery if needed
-    await deliveriesStore.addDelivery(payload);
-    await deliveriesStore.fetchDeliveries();
+  
+    if (editMode.value && editingIndex.value !== null) {
+      deliveriesStore.updateDelivery(editingIndex.value, payload)
+    } else {
+      await deliveriesStore.addDelivery(payload)
+      await deliveriesStore.fetchDeliveries()
+    }
+  
+    closeModal()
   }
 
-  closeModal();
-};
-
-
-
-
-
-  
+  // Delete selected delivery
   const deleteDelivery = async (i) => {
     await deliveriesStore.deleteDelivery(i)
     await deliveriesStore.fetchDeliveries()
   }
   
+  // Delete past delivery by ID
   const deletePast = async (id) => {
     await deliveriesStore.deletePastDeliveryById(id)
   }
   
-  const startEdit = (i) => {
-  const delivery = deliveriesStore.deliveries[i]; // Get the delivery to edit
-  
-  // Make sure data exists for the selected delivery
-  if (!delivery) return;
-
-  // Pre-fill the basic fields with current delivery data
-  from.value = delivery.from_location;
-  notes.value = delivery.notes;
-
-  // Pre-fill the resource usage rows
-  resourceUsages.value = delivery.resources.map(res => ({
-    resourceId: res.resourceId || '',  // Ensure resourceId is set
-    cases: res.cases || 1              // Ensure cases have a default value if missing
-  }));
-
-  // Set edit mode and the editing index
-  editMode.value = true;
-  editingIndex.value = i;
-  showModal.value = true;  // Open the modal for editing
-};
-
-
-  
+  // Mark as completed 
   const markCompleted = async (i) => {
     await deliveriesStore.markAsCompleted(i)
     await deliveriesStore.fetchDeliveries()
