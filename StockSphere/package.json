@@ -4,6 +4,7 @@
     },
   "dependencies": {
     "lucide-vue-next": "^0.483.0",
-    "vite": "^6.2.2"
+    "vite": "^6.2.2",
+    "chart.js": "^3.7.0"
   }
 }
