@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 // Get CSRF token from cookies
-
 const csrftoken = document.cookie.match(/csrftoken=([\w-]+)/);
 
 window.onload = function () {

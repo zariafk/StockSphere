@@ -3,6 +3,7 @@
         <div class="form-card">
             <h1>Sign Up</h1> 
             <form @submit.prevent = "register">
+                <!-- Fields for signing up -->
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="business_name">Business Name:</label>
@@ -47,53 +48,56 @@
         getCSRFToken
     } from '../store/auth'
 
-export default {
-    data() {
-        return {
-            business_name: '',
-            username: '',
-            email: '',
-            role: '',
-            password: '',
-            password_confirm: '',
-            error: '',
-            success: ''
-        }
-    },
-    methods: {
-        async register() {
-            try {
-                const response = await fetch('http://localhost:8000/api/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCSRFToken()
-                    },
-                    body: JSON.stringify({
-                        business_name: this.business_name,
-                        username: this.username,
-                        email: this.email,
-                        role: this.role,
-                        password: this.password,
-                        password_confirm: this.password_confirm
-                    }),
-                    credentials: 'include'
-                })
-                const data = await response.json()
-                if (response.ok) {
-                    this.success = 'Registration successful! Please log in.'
-                    setTimeout(() => {
-                        this.$router.push('/login')
-                    }, 1000)
-                } else {
-                    this.error = data.error || 'Registration failed'
+    export default {
+        data() {
+            return {
+                business_name: '',
+                username: '',
+                email: '',
+                role: '',
+                password: '',
+                password_confirm: '',
+                error: '',
+                success: ''
+            }
+        },
+        methods: {
+            // Registering new account
+            async register() {
+                try {
+                    // POST request to register new account
+                    const response = await fetch('http://localhost:8000/api/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken()
+                        },
+                        body: JSON.stringify({
+                            business_name: this.business_name,
+                            username: this.username,
+                            email: this.email,
+                            role: this.role,
+                            password: this.password,
+                            password_confirm: this.password_confirm
+                        }),
+                        credentials: 'include'
+                    })
+                    // Response
+                    const data = await response.json()
+                    if (response.ok) {
+                        this.success = 'Registration successful! Please log in.'
+                        setTimeout(() => {
+                            this.$router.push('/login')
+                        }, 1000)
+                    } else {
+                        this.error = data.error || 'Registration failed'
+                    }
+                } catch (err) {
+                    this.error = 'An error occurred during registration: ' + err
                 }
-            } catch (err) {
-                this.error = 'An error occurred during registration: ' + err
             }
         }
-    }
-} 
+    }    
 </script>
 
 <style scoped>
@@ -130,20 +134,13 @@ export default {
         color: #EAEAEA;
     }
     
-    /* 
-      A two-column grid for the input fields:
-      each row has two inputs side by side.
-    */
     .form-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 2rem 5rem; /* space between columns and rows */
+        gap: 2rem 5rem; 
         margin-bottom: 1rem;
     }
-    
-    /* 
-      Each field group (label + input).
-    */
+
     .form-group {
         display: flex;
         flex-direction: column;
@@ -159,57 +156,47 @@ export default {
     .form-group input {
         width: 100%;
         padding: 12px 14px;
-        border: 2px solid #b54de6; /* Subtle border */
-        border-radius: 8px; /* Rounded edges for modern look */
+        border: 2px solid #b54de6; 
+        border-radius: 8px; 
         font-size: 1rem;
-        transition: all 0.3s ease-in-out; /* Smooth transitions */
-        background-color: #D1D5DB; /* Light background for contrast */
-        box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1); /* Soft inner shadow */
+        transition: all 0.3s ease-in-out; 
+        background-color: #D1D5DB; 
+        box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1); 
         color: black;
     }
 
     .form-group input:focus {
-        border-color: #9c3fd9; /* Darker shade for interaction */
+        border-color: #9c3fd9; 
         background-color: white;
         outline: none;
-        box-shadow: 0px 4px 8px rgba(42, 1, 61, 0.3); /* Glow effect */
+        box-shadow: 0px 4px 8px rgba(42, 1, 61, 0.3); 
     }
     
-    /* 
-      A small note text.
-    */
     .note {
         margin: 1rem 0;
         font-size: 0.9rem;
         color: #eaeaea;
     }
     
-    /* 
-      Main action button: 
-      pink background, white text, etc.
-    */
     .primary-button {
         display: inline-block;
-    padding: 12px 20px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: white;
-    background: linear-gradient(135deg, #b54de6, #9c3fd9); /* Soft gradient */
-    border: none;
-    border-radius: 8px; /* Rounded corners */
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.3s ease-in-out;
-    box-shadow: 0px 4px 10px rgba(181, 77, 230, 0.3); /* Soft outer shadow */
+        padding: 12px 20px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: white;
+        background: linear-gradient(135deg, #b54de6, #9c3fd9); 
+        border: none;
+        border-radius: 8px; 
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0px 4px 10px rgba(181, 77, 230, 0.3); 
     }
     
     .primary-button:hover {
         background-color: #b54de6;
     }
     
-    /* 
-      Error and success text styling.
-    */
     .error-text {
         color: red;
         margin-top: 1rem;

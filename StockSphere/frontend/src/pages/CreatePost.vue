@@ -2,6 +2,7 @@
   <div class="create-post-container">
     <h1>Create a Post in Community {{ communityId }}</h1>
     
+    <!-- Create a post -->
     <form @submit.prevent="createPost" class="post-form">
       <div class="form-group">
         <label for="title">Post Title</label>
@@ -53,12 +54,6 @@ export default {
         console.log('Community ID:', this.communityId);
         const communityIdInt = parseInt(this.communityId, 10);
 
-        console.log('Creating post:', {
-          title: this.title,
-          content: this.content,
-          community: communityIdInt,
-        });
-
         await axios.post('/api/posts/', {
           title: this.title,
           content: this.content,
@@ -84,94 +79,92 @@ export default {
 </script>
 
 <style scoped>
-.create-post-container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-  margin-top: 100px;
-  margin-left: 50px;
-  background-color: #1b1e27;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
+  .create-post-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    margin-top: 100px;
+    margin-left: 50px;
+    background-color: #1b1e27;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
 
-h1 {
-  text-align: center;
-  color: #eaeaea;
-  margin-bottom: 20px;
-}
+  h1 {
+    text-align: center;
+    color: #eaeaea;
+    margin-bottom: 20px;
+  }
 
-.post-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
+  .post-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
 
-label {
-  font-size: 16px;
-  color: #eaeaea;
-  margin-bottom: 8px;
-}
+  label {
+    font-size: 16px;
+    color: #eaeaea;
+    margin-bottom: 8px;
+  }
 
-.form-input {
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-  color: #eaeaea;
-  margin-bottom: 10px;
-  width: 100%;
-}
+  .form-input {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    color: #eaeaea;
+    margin-bottom: 10px;
+    width: 100%;
+  }
 
-.form-input:focus {
-  border-color: #9b2bd3;
-  outline: none;
-}
+  .form-input:focus {
+    border-color: #9b2bd3;
+    outline: none;
+  }
 
-/* Full-width Submit Button */
-.submit-button {
-  padding: 12px;
-  background-color: #b43de6;
-  color: #eaeaea;
-  font-size: 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100%;
-}
+  .submit-button {
+    padding: 12px;
+    background-color: #b43de6;
+    color: #eaeaea;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+  }
 
-.submit-button:hover {
-  background-color: #9b2bd3;
-}
+  .submit-button:hover {
+    background-color: #9b2bd3;
+  }
 
-.submit-button:focus {
-  outline: none;
-}
+  .submit-button:focus {
+    outline: none;
+  }
 
-/* Full-width Cancel Button */
-.cancel-button {
-  padding: 12px;
-  background-color: #1b1e27;
-  color: #eaeaea;
-  font-size: 16px;
-  border-radius: 4px;
-  border-color: #b43de6;
-  border-width: 2px;
-  cursor: pointer;
-  width: 100%; /* Make the Cancel button full width */
-  margin-top: 10px; /* Add some space between Submit and Cancel buttons */
-}
+  .cancel-button {
+    padding: 12px;
+    background-color: #1b1e27;
+    color: #eaeaea;
+    font-size: 16px;
+    border-radius: 4px;
+    border-color: #b43de6;
+    border-width: 2px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+  }
 
-.cancel-button:hover {
-  background-color: #171a23;
-}
+  .cancel-button:hover {
+    background-color: #171a23;
+  }
 
-.cancel-button:focus {
-  outline: none;
-}
+  .cancel-button:focus {
+    outline: none;
+  }
 </style>

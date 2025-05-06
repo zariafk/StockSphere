@@ -4,6 +4,7 @@
         <table class="resource-table">
             <thead>
                 <tr>
+                    <!-- Resource table columns -->
                     <th>Name</th>
                     <th>Price Per Pack</th>
                     <th>Units Per Pack</th>
@@ -79,141 +80,143 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
-import { useResourceStore } from "../store/resources";
-import { PencilLine, Trash2 } from 'lucide-vue-next';
-import { useNotificationStore } from '../store/notifications';
-import { useAuthStore } from '../store/auth';
+    import { onMounted, ref } from "vue";
+    import { useResourceStore } from "../store/resources";
+    import { PencilLine, Trash2 } from 'lucide-vue-next';
+    import { useNotificationStore } from '../store/notifications';
+    import { useAuthStore } from '../store/auth';
 
 
-const resourceStore = useResourceStore();
-const showModal = ref(false);
+    const resourceStore = useResourceStore();
+    const showModal = ref(false);
 
-const name = ref("");
-const price_per_pack = ref("");
-const units_per_pack = ref("");
-const available_units = ref("");
-const arriving_units = ref("");
-const notes = ref("");
+    const name = ref("");
+    const price_per_pack = ref("");
+    const units_per_pack = ref("");
+    const available_units = ref("");
+    const arriving_units = ref("");
+    const notes = ref("");
 
-const editMode = ref(false);
-const editingId = ref(null);
+    const editMode = ref(false);
+    const editingId = ref(null);
 
-const authStore = useAuthStore();
-const notificationStore = useNotificationStore();
+    const authStore = useAuthStore();
+    const notificationStore = useNotificationStore();
 
-onMounted(async() => {
-    await resourceStore.fetchResources();
-    if (resourceStore.resources.length > 0) {
-    console.log('Calling checkResourceStock...');
-    checkResourceStock();
-  } else {
-    console.log('No resources to check stock for.');
-  }
-});
+    onMounted(async() => {
+        await resourceStore.fetchResources();
+        if (resourceStore.resources.length > 0) {
+        checkResourceStock();
+    } else {
+        console.log('No resources to check stock for.');
+    }
+    });
 
-const saveResource = async () => {
-    const payload = {
-        name: name.value,
-        price_per_pack: parseFloat(price_per_pack.value),
-        units_per_pack: parseInt(units_per_pack.value),
-        available_units: parseInt(available_units.value),
-        arriving_units: parseInt(arriving_units.value),
-        notes: notes.value,
+    // Save resource
+    const saveResource = async () => {
+        const payload = {
+            name: name.value,
+            price_per_pack: parseFloat(price_per_pack.value),
+            units_per_pack: parseInt(units_per_pack.value),
+            available_units: parseInt(available_units.value),
+            arriving_units: parseInt(arriving_units.value),
+            notes: notes.value,
+        };
+
+        if (editMode.value && editingId.value !== null) {
+            await resourceStore.updateResource(editingId.value, payload);
+        } else {
+            await resourceStore.addResource(payload);
+        }
+
+        resetForm();
+        showModal.value = false;
     };
 
-    if (editMode.value && editingId.value !== null) {
-        await resourceStore.updateResource(editingId.value, payload);
-    } else {
-        await resourceStore.addResource(payload);
-    }
+    // Editing resource
+    const startEdit = (resource) => {
+        name.value = resource.name;
+        price_per_pack.value = resource.price_per_pack;
+        units_per_pack.value = resource.units_per_pack;
+        available_units.value = resource.available_units;
+        arriving_units.value = resource.arriving_units;
+        notes.value = resource.notes;
+        editingId.value = resource.id;
+        editMode.value = true;
+        showModal.value = true;
+    };
 
-    resetForm();
-    showModal.value = false;
-};
+    // Reset form
+    const resetForm = () => {
+        name.value = "";
+        price_per_pack.value = "";
+        units_per_pack.value = "";
+        available_units.value = "";
+        arriving_units.value = "";
+        notes.value = "";
+        editingId.value = null;
+        editMode.value = false;
+    };
 
-const startEdit = (resource) => {
-    name.value = resource.name;
-    price_per_pack.value = resource.price_per_pack;
-    units_per_pack.value = resource.units_per_pack;
-    available_units.value = resource.available_units;
-    arriving_units.value = resource.arriving_units;
-    notes.value = resource.notes;
-    editingId.value = resource.id;
-    editMode.value = true;
-    showModal.value = true;
-};
+    // Checking stock for notification feature
+    const checkResourceStock = () => {
+    const notificationsSent = localStorage.getItem("notificationsSent");
+    if (notificationsSent) return;
 
-const resetForm = () => {
-    name.value = "";
-    price_per_pack.value = "";
-    units_per_pack.value = "";
-    available_units.value = "";
-    arriving_units.value = "";
-    notes.value = "";
-    editingId.value = null;
-    editMode.value = false;
-};
+    resourceStore.resources.forEach(async (resource) => {
+        console.log('Resource object:', resource);
 
-const checkResourceStock = () => {
-  const notificationsSent = localStorage.getItem("notificationsSent");
-  if (notificationsSent) return;
-
-  console.log('Authenticated User:', authStore.user);
-
-  resourceStore.resources.forEach(async (resource) => {
-    console.log('Resource object:', resource);
-
-    if (resource.available_units <= 50) {
-      // Push the notification locally
-      notificationStore.notifications.push({
-        message: `Resource "${resource.name}" has 50 or fewer units left.`,
-        type: 'alert',
-        is_read: false,
-      });
-
-      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
-      const userId = authStore.user?.id;
-      console.log('Authenticated User ID:', userId);
-
-      // Send a request to the backend to save the notification
-      try {
-        const response = await fetch('http://localhost:8000/api/dashboard', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            userId: authStore.user?.username,
+        if (resource.available_units <= 50) {
+        // Push the notification locally
+        notificationStore.notifications.push({
             message: `Resource "${resource.name}" has 50 or fewer units left.`,
+            type: 'alert',
             is_read: false,
-          }),
         });
 
-        if (response.ok) {
-          console.log('Notification saved to the backend');
-        } else {
-          console.error('Failed to save notification to backend');
+        const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+        const userId = authStore.user?.id;
+        console.log('Authenticated User ID:', userId);
+
+        // Send a request to the backend to save the notification
+        try {
+            const response = await fetch('http://localhost:8000/api/dashboard', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                userId: authStore.user?.username,
+                message: `Resource "${resource.name}" has 50 or fewer units left.`,
+                is_read: false,
+            }),
+            });
+
+            if (response.ok) {
+            console.log('Notification saved to the backend');
+            } else {
+            console.error('Failed to save notification to backend');
+            }
+        } catch (error) {
+            console.error('Error saving notification:', error);
         }
-      } catch (error) {
-        console.error('Error saving notification:', error);
-      }
-    }
-  });
-  localStorage.setItem("notificationsSent", "true");
-};
+        }
+    });
+    localStorage.setItem("notificationsSent", "true");
+    };
 
+    // Adding resource
+    const openAddResourceModal = () => {
+        resetForm();
+        showModal.value = true;
+    };
 
-const openAddResourceModal = () => {
-    resetForm();
-    showModal.value = true;
-};
-
-const deleteResource = async (id) => {
-    await resourceStore.deleteResource(id);
-};
+    // Deleting resource
+    const deleteResource = async (id) => {
+        await resourceStore.deleteResource(id);
+    };
 </script>
 
 

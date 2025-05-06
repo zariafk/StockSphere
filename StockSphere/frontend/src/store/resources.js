@@ -63,6 +63,7 @@ export const useResourceStore = defineStore("resource", () => {
         }
       }
       
+      // Delete resource
       const deleteResource = async (id) => {
         try {
           const response = await fetch(`http://localhost:8000/api/resources/${id}/delete`, {
@@ -80,7 +81,6 @@ export const useResourceStore = defineStore("resource", () => {
           console.error("Failed to delete resource", error)
         }
       }
-
     return { resources, fetchResources, addResource, updateResource, deleteResource };
 });
 

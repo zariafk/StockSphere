@@ -2,13 +2,13 @@ import { defineStore } from 'pinia';
 
 export const useNotificationStore = defineStore('notification', {
   state: () => ({
-    notifications: [],  // Pinia automatically makes this state reactive
+    notifications: [],  
     notificationsFetched: false,  // Flag to track if notifications are already fetched
   }),
   actions: {
-    // Fetch notifications from the API (if needed)
+    // Fetch notifications from the API 
     async fetchNotifications() {
-      if (this.notificationsFetched) return; // Skip fetching if already done
+      if (this.notificationsFetched) return; 
       try {
         const response = await fetch('/api/dashboard');
         if (!response.ok) {
@@ -31,7 +31,7 @@ export const useNotificationStore = defineStore('notification', {
     // Reset the fetched flag if needed (for example, if you log out or refresh)
     resetNotifications() {
       this.notificationsFetched = false;
-      this.notifications = [];  // Optionally clear notifications as well
+      this.notifications = [];  // Clear notifications as well
     }
   },
 });

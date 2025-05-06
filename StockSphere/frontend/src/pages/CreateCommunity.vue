@@ -1,12 +1,12 @@
 <template>
   <div class="create-community-container">
     <h2>Create a Community</h2>
+    <!-- To create a community -->
     <form @submit.prevent="createCommunity" class="community-form">
       <div class="form-group">
         <label for="name">Community Name</label>
         <input v-model="community.name" id="name" type="text" required />
       </div>
-
       <div class="form-group">
         <label for="description">Community Description</label>
         <textarea v-model="community.description" id="description" required></textarea>
@@ -36,7 +36,6 @@ export default {
         // Send POST request to the backend to create a community
         const response = await axios.post('/api/communities/', this.community);
 
-        // Optionally redirect or show success message
         this.$router.push('/forum'); // Redirect to the forum after community is created
         alert('Community created successfully!');
       } catch (error) {

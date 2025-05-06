@@ -188,21 +188,36 @@
   const saveDelivery = async () => {
   const payload = {
     from_location: from.value,
-    notes: notes.value,
+    notes: notes.value || '',  // Make sure notes are included (allow empty string)
     resources: resourceUsages.value
       .filter(r => r.resourceId && r.cases)
       .map(r => ({
-        resource: r.resourceId,
-        cases: r.cases
+        resource: r.resourceId,  // Ensure this is a valid resource ID
+        cases: r.cases  // Ensure this is a positive number
       })),
-    completed: false // Ensure completed status is passed correctly
+    completed: false
   };
 
-  // If in edit mode, update the existing delivery in the store and backend
   if (editMode.value && editingIndex.value !== null) {
-    deliveriesStore.updateDelivery(editingIndex.value, payload);  // Update local state
-    // Call the backend API to update the delivery
-    const res = await fetch(`http://localhost:8000/api/deliveries/${deliveriesStore.deliveries[editingIndex.value].id}/update`, {
+    const originalDelivery = deliveriesStore.deliveries[editingIndex.value];
+
+    // Update arriving_units for resources based on the difference between old and new
+    originalDelivery.resources.forEach(originalResource => {
+      const updatedResource = payload.resources.find(r => r.resource === originalResource.resource);
+
+      if (updatedResource) {
+        const oldUnits = originalResource.cases * originalResource.unitsPerPack;
+        const newUnits = updatedResource.cases * updatedResource.unitsPerPack;
+
+        // Ensure the arriving_units are correctly updated
+        deliveriesStore.updateResource(originalResource.resource, {
+          arriving_units: resourceStore.resources.find(r => r.id === originalResource.resource).arriving_units - oldUnits + newUnits
+        });
+      }
+    });
+
+    // Send PUT request to update the delivery
+    const response = await fetch(`http://localhost:8000/api/deliveries/${originalDelivery.id}/update`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -211,17 +226,27 @@
       credentials: 'include',
       body: JSON.stringify(payload),
     });
-    if (res.ok) {
-      await deliveriesStore.fetchDeliveries();  // Refresh the deliveries list
+
+    if (response.ok) {
+      const updatedDelivery = await response.json();
+      // Update the delivery in the local store
+      deliveriesStore.deliveries[editingIndex.value] = updatedDelivery;
+    } else {
+      const errorDetails = await response.json();
+      console.error('Failed to update delivery:', errorDetails);
     }
   } else {
-    // If adding a new delivery, use the addDelivery method
+    // Handle adding a new delivery if needed
     await deliveriesStore.addDelivery(payload);
     await deliveriesStore.fetchDeliveries();
   }
 
-  closeModal();  // Close the modal after saving
+  closeModal();
 };
+
+
+
+
 
   
   const deleteDelivery = async (i) => {
@@ -234,17 +259,17 @@
   }
   
   const startEdit = (i) => {
-  const d = deliveriesStore.deliveries[i]; // Get the delivery to edit
+  const delivery = deliveriesStore.deliveries[i]; // Get the delivery to edit
   
   // Make sure data exists for the selected delivery
-  if (!d) return;
+  if (!delivery) return;
 
   // Pre-fill the basic fields with current delivery data
-  from.value = d.from_location;
-  notes.value = d.notes;
+  from.value = delivery.from_location;
+  notes.value = delivery.notes;
 
   // Pre-fill the resource usage rows
-  resourceUsages.value = d.resources.map(res => ({
+  resourceUsages.value = delivery.resources.map(res => ({
     resourceId: res.resourceId || '',  // Ensure resourceId is set
     cases: res.cases || 1              // Ensure cases have a default value if missing
   }));
@@ -254,6 +279,7 @@
   editingIndex.value = i;
   showModal.value = true;  // Open the modal for editing
 };
+
 
   
   const markCompleted = async (i) => {

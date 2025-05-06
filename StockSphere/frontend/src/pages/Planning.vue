@@ -1,6 +1,7 @@
 <template>
     <div class="planning-container">
       <h1>Planning</h1>
+      <!-- Informing the user of important information -->
       <p class="note">
         Note: Existing stock levels of products are not considered. This calculator estimates resources needed to produce new units.
       </p>
@@ -16,6 +17,7 @@
         <tbody>
           <tr v-for="(plan, index) in productPlans" :key="index">
             <td>
+              <!-- Slecting/Adding products to plan -->
               <select v-model="plan.productId">
                 <option disabled value="">-- Select Product --</option>
                 <option v-for="product in productStore.products" :key="product.id" :value="product.id">
@@ -99,12 +101,17 @@
     const productPlans = ref([{ productId: '', units: 0 }])
     const showResults = ref(false)
     
+    // Add product row
     const addPlanRow = () => {
       productPlans.value.push({ productId: '', units: 0 })
     }
+
+    // Remove product row
     const removePlanRow = (index) => {
       productPlans.value.splice(index, 1)
     }
+
+    // Reset plan
     const resetPlans = () => {
       productPlans.value = [{ productId: '', units: 0 }]
       showResults.value = false
@@ -151,6 +158,7 @@
       })
     })
     
+    // Total cost of all resources required
     const totalCost = computed(() =>
       calculatedResources.value.reduce((sum, r) => sum + r.totalCost, 0)
     )
@@ -158,136 +166,135 @@
     const runCalculation = () => {
       showResults.value = true
     }
-    </script>
+</script>
     
   
-  <style scoped>
-.planning-container {
-  color: #eaeaea;
-  margin-top: 100px;
-  margin-left: 70px;
-  text-align: left;
-}
+<style scoped>
+  .planning-container {
+    color: #eaeaea;
+    margin-top: 100px;
+    margin-left: 70px;
+    text-align: left;
+  }
 
-.note {
-  font-size: 14px;
-  color: #bbbbbb;
-  margin-bottom: 20px;
-}
+  .note {
+    font-size: 14px;
+    color: #bbbbbb;
+    margin-bottom: 20px;
+  }
 
-.plan-table, .results-table {
-  width: 100%;
-  margin-top: 20px;
-  border-collapse: collapse;
-  background-color: #1e1e2e;
-  color: #eaeaea;
-  border-radius: 8px;
-  overflow: hidden;
-  font-size: 14px;
-}
+  .plan-table, .results-table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    background-color: #1e1e2e;
+    color: #eaeaea;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 14px;
+  }
 
-.plan-table th, .plan-table td,
-.results-table th, .results-table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid #333;
-}
+  .plan-table th, .plan-table td,
+  .results-table th, .results-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+  }
 
-.plan-table th, .results-table th {
-  background-color: #2b2e3d;
-  font-weight: bold;
-}
+  .plan-table th, .results-table th {
+    background-color: #2b2e3d;
+    font-weight: bold;
+  }
 
-.plan-table tr:hover, .results-table tr:hover {
-  background-color: #2e3344;
-}
+  .plan-table tr:hover, .results-table tr:hover {
+    background-color: #2e3344;
+  }
 
-input[type="number"], select {
-  width: 100%;
-  padding: 6px 10px;
-  background-color: #26293a;
-  border: 1px solid #444;
-  color: #eaeaea;
-  border-radius: 4px;
-  font-family: 'Exo', sans-serif;
-}
+  input[type="number"], select {
+    width: 100%;
+    padding: 6px 10px;
+    background-color: #26293a;
+    border: 1px solid #444;
+    color: #eaeaea;
+    border-radius: 4px;
+    font-family: 'Exo', sans-serif;
+  }
 
-.button-row {
-  margin-top: 20px;
-  display: flex;
-  gap: 12px;
-}
+  .button-row {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+  }
 
-.add-row, .calculate-button {
-  padding: 8px 16px;
-  color: #fff;
-  border-radius: 4px;
-  cursor: pointer;
-}
+  .add-row, .calculate-button {
+    padding: 8px 16px;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+  }
 
-.add-row {
-    background-color: #171a23;
-    border-color: #b43de6;
-    border-width: 3px;
-}
-.calculate-button {
-  background-color: #b43de6;
-}
+  .add-row {
+      background-color: #171a23;
+      border-color: #b43de6;
+      border-width: 3px;
+  }
+  .calculate-button {
+    background-color: #b43de6;
+  }
 
-.calculate-button:hover {
-  background-color: #9031b8;
-}
+  .calculate-button:hover {
+    background-color: #9031b8;
+  }
 
-.add-row:hover {
-  background-color: #12141c;
-}
+  .add-row:hover {
+    background-color: #12141c;
+  }
 
-.remove-row {
-  background: none;
-  border: none;
-  color: #ff5555;
-  cursor: pointer;
-  font-size: 16px;
-}
+  .remove-row {
+    background: none;
+    border: none;
+    color: #ff5555;
+    cursor: pointer;
+    font-size: 16px;
+  }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-}
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
 
-.modal {
-  background: #171a23;
-  padding: 20px;
-  border-radius: 10px;
-  width: 650px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-  text-align: left;
-}
+  .modal {
+    background: #171a23;
+    padding: 20px;
+    border-radius: 10px;
+    width: 650px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    text-align: left;
+  }
 
-.total-section {
-  margin-top: 20px;
-  font-size: 16px;
-}
+  .total-section {
+    margin-top: 20px;
+    font-size: 16px;
+  }
 
-.close-button {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-  </style>
+  .close-button {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+</style>
   

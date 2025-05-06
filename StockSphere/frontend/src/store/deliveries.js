@@ -97,14 +97,50 @@ export const useDeliveriesStore = defineStore('deliveries', {
       }
     },
 
-updateDelivery(index, updatedDelivery) {
-  const deliveryToUpdate = this.deliveries[index];
-  if (deliveryToUpdate) {
-    // Here, we update the delivery in the local store with the updated data
-    this.deliveries[index] = { ...deliveryToUpdate, ...updatedDelivery };
-  }
-},
-
+    updateDelivery(index, updatedDelivery) {
+      const deliveryToUpdate = this.deliveries[index];
+      if (deliveryToUpdate) {
+          const resourceStore = useResourceStore();
+          
+          // Step 1: Handle resource updates (subtract the old arriving units and add the new ones)
+          deliveryToUpdate.resources.forEach(originalResource => {
+              const updatedResource = updatedDelivery.resources.find(r => r.resource === originalResource.resource);
+              if (updatedResource) {
+                  const oldUnits = originalResource.cases * originalResource.unitsPerPack;
+                  const newUnits = updatedResource.cases * updatedResource.unitsPerPack;
+  
+                  // Ensure the resource quantities are correctly updated
+                  resourceStore.updateResource(originalResource.resource, {
+                      arriving_units: resourceStore.resources.find(r => r.id === originalResource.resource).arriving_units - oldUnits + newUnits
+                  });
+              }
+          });
+  
+          // Step 2: Update the delivery data itself (including the new notes, from_location, etc.)
+          this.deliveries[index] = { ...deliveryToUpdate, ...updatedDelivery };
+      }
+  },  
+    
+    updateResource(resourceId, updatedData) {
+      const resource = useResourceStore().resources.find(r => r.id === resourceId);
+      if (resource) {
+        // Update the resource locally
+        Object.assign(resource, updatedData);
+    
+        // Make the API call to persist the changes to the backend
+        fetch(`http://localhost:8000/api/resources/${resourceId}/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+          },
+          credentials: 'include',
+          body: JSON.stringify(updatedData),
+        })
+          .then(response => response.json())
+          .catch(error => console.error('Failed to update resource on the server:', error));
+      }
+    },       
 
     async deleteDelivery(index) {
       const delivery = this.deliveries[index]

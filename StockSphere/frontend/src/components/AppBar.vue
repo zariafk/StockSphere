@@ -2,6 +2,7 @@
     <nav class="app-bar">
       <h1 class="logo-text">StockSphere</h1>
       <div v-if="!$route.meta.hideTabs" class="tabs">
+        <!-- Tabs in app bar -->
         <router-link to="/dashboard">Dashboard</router-link>
         <router-link to="/resources">Resources</router-link>
         <router-link to="/products">Products</router-link>
