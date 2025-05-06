@@ -1,5 +1,5 @@
 To run the project:
-1. Clone the repository using git clone <this-repo-url>
+1. Clone the repository using git clone //url//
 2. Once you have opened the repository in a text editor, open terminal
 3. Run command: cd StockSphere
 4. Run command: python manage.py runserver
