@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { getCSRFToken } from './auth'; // Assuming you have a CSRF token helper like in the resource store
+import { getCSRFToken } from './auth'; // CSRF token helper like in the resource store
 
 export const useProductStore = defineStore('products', () => {
   const products = ref([]);  // This will store products

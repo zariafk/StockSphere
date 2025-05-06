@@ -16,6 +16,12 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from .serializers import PostSerializer, CommentSerializer
+
 
 # Forms
 from .forms import CreateUserForm
@@ -45,18 +51,18 @@ try:
 except Exception as e:
     print("Error: ", e)
 
-
+# Home view
 from django.http import HttpResponse
 def home(request):
     return HttpResponse("Welcome to the StockSphere API!")
 
 # AUTHENTICATION
-@ensure_csrf_cookie
+@ensure_csrf_cookie # Ensures CSRF cookie is set for subsequent requests
 @require_http_methods(['GET'])
 def set_csrf_token(request):
     return JsonResponse({'message': 'CSRF cookie set'})
 
-
+# Password reset request handler
 def password_reset_request(request):
     if request.method == "POST":
         try:
@@ -75,7 +81,7 @@ def password_reset_request(request):
                 # If email is valid, send the reset link
                 users = list(form.get_users(email))  # Convert the generator to a list
                 if users:
-                    user = users[0]  # Now you can safely access the first user
+                    user = users[0]  # Now safely access the first user
                     token = default_token_generator.make_token(user)
                     uid = urlsafe_base64_encode(str(user.pk).encode())
 
@@ -104,10 +110,11 @@ def password_reset_request(request):
 
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+# Password reset done view; renders the reset done page
 def password_reset_done(request):
     return render(request, 'password_reset_done.html')
 
-
+# Password reset confirm view; processes the reset request
 def password_reset_confirm(request, uidb64, token):
     try:
         # Decode the UID from base64
@@ -131,10 +138,11 @@ def password_reset_confirm(request, uidb64, token):
     except Exception as e:
         return JsonResponse({'error': 'Invalid reset link.'}, status=400)
 
-
+# Password reset complete view; renders the reset completion page
 def password_reset_complete(request):
     return render(request, 'password_reset_complete.html')
-    
+
+# login view that sends a 2FA code to user email
 @require_http_methods(['POST'])
 @csrf_exempt
 def login_view(request):
@@ -170,6 +178,7 @@ def login_view(request):
     
     return JsonResponse({'success': False, 'message': 'Invalid credentials'}, status=401)
 
+# Verify 2FA code and authenticate user
 @require_http_methods(['POST'])
 @csrf_exempt
 def verify_2fa_view(request):
@@ -197,11 +206,12 @@ def verify_2fa_view(request):
     else:
         return JsonResponse({'success': False, 'message': 'Invalid verification code'}, status=403)
 
-
+# Logout view
 def logout_view(request):
     logout(request)
     return JsonResponse({'message': 'Logged out'})
 
+# User info view
 @require_http_methods(['GET'])
 def user(request):
     if request.user.is_authenticated:
@@ -212,6 +222,7 @@ def user(request):
         {'message': 'Not logged in'}, status=401
     )
 
+# User registration view
 @require_http_methods(['POST'])
 def register(request):
     data = json.loads(request.body.decode('utf-8'))
@@ -225,6 +236,8 @@ def register(request):
     
 
 # RESOURCES
+
+# Get all resources for the logged-in user
 @require_http_methods(['GET'])
 @login_required
 def get_resources(request):
@@ -235,7 +248,7 @@ def get_resources(request):
     serializer = ResourceSerializer(resources, many=True)
     return JsonResponse(serializer.data, safe=False)
 
-
+# Add a new resource for the logged in user
 @require_http_methods(['POST'])
 @login_required
 def add_resource(request):
@@ -248,13 +261,14 @@ def add_resource(request):
         serializer = ResourceSerializer(data=data)
 
         if serializer.is_valid():
-            serializer.save(user=request.user)  # Assign product to logged-in user
+            serializer.save(user=request.user)  # Assign resource to logged-in user
             return JsonResponse(serializer.data, status=201)
         print("Validation errors: ", serializer.errors)
         return JsonResponse(serializer.errors, status=400)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
+# Update an existing resource for the logged-in user
 @require_http_methods(['PUT'])
 @login_required
 def update_resource(request, resource_id):
@@ -269,7 +283,7 @@ def update_resource(request, resource_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-
+# Delete a resource for the logged in user
 @require_http_methods(['DELETE'])
 @login_required
 def delete_resource(request, resource_id):
@@ -278,7 +292,7 @@ def delete_resource(request, resource_id):
     return JsonResponse({'message': 'Deleted'}, status=204)
 
 
-# Fetch products
+# Fetch products for the logged in user
 @require_http_methods(['GET'])
 @login_required
 def get_products(request):
@@ -289,7 +303,7 @@ def get_products(request):
     serializer = ProductSerializer(products, many=True)
     return JsonResponse(serializer.data, safe=False)
 
-# Add a new product
+# Add a new product for the logged in user
 @require_http_methods(['POST'])
 @login_required
 def add_product(request):
@@ -307,7 +321,7 @@ def add_product(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
-# Update a product
+# Update a product for the logged in user
 @require_http_methods(['PUT'])
 @login_required
 def update_product(request, product_id):
@@ -323,7 +337,7 @@ def update_product(request, product_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-# Delete a product
+# Delete a product for the logged in user
 @require_http_methods(['DELETE'])
 @login_required
 def delete_product(request, product_id):
@@ -333,7 +347,6 @@ def delete_product(request, product_id):
         return JsonResponse({'message': 'Deleted successfully'}, status=204)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
 
 # Fetch notifications for the logged-in user
 @require_http_methods(['GET'])
@@ -380,7 +393,6 @@ def save_notification(request):
 
 
 # Dashboard: Fetch and save notifications
-# If CSRF is enabled, remove this.
 @require_http_methods(['GET', 'POST'])
 def dashboard(request):
     # Manual authentication check
@@ -425,6 +437,7 @@ def dashboard(request):
         ]
         return JsonResponse(notifications_data, safe=False)
 
+# Mark a notification as read
 @require_http_methods(['PUT'])
 @login_required
 def mark_notification_as_read(request, notification_id):
@@ -436,7 +449,7 @@ def mark_notification_as_read(request, notification_id):
 
     return JsonResponse({'message': 'Notification marked as read'}, status=200)
 
-# Fetch deliveries
+# Fetch deliveries for the logged-in user
 @require_http_methods(['GET'])
 @login_required
 def get_deliveries(request):
@@ -444,7 +457,7 @@ def get_deliveries(request):
     serializer = DeliverySerializer(deliveries, many=True)
     return JsonResponse(serializer.data, safe=False)
 
-# Add a delivery
+# Add a delivery for the logged in user
 @require_http_methods(['POST'])
 @login_required
 def add_delivery(request):
@@ -458,41 +471,7 @@ def add_delivery(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
-@require_http_methods(['PUT'])
-@login_required
-def update_delivery(request, delivery_id):
-    try:
-        delivery = get_object_or_404(Delivery, id=delivery_id, user=request.user)
-        data = json.loads(request.body)
-
-        # Only update simple fields manually
-        delivery.from_location = data.get('from_location', delivery.from_location)
-        delivery.notes = data.get('notes', delivery.notes)
-        delivery.completed = data.get('completed', delivery.completed)
-        delivery.save()
-
-        # 🛠 Handle resources separately
-        if 'resources' in data:
-            delivery.resources.all().delete()
-            for res_data in data['resources']:
-                DeliveryResource.objects.create(
-                    delivery=delivery,
-                    resource_id=res_data['resource'],
-                    cases=res_data['cases']
-                )
-
-        # Re-serialize and return updated delivery
-        updated_delivery_data = DeliverySerializer(delivery).data
-
-        return JsonResponse(updated_delivery_data, status=200)
-
-    except Exception as e:
-        print('Error in update_delivery:', e)
-        return JsonResponse({'error': str(e)}, status=500)
-
-
-
-# Delete a delivery
+# Delete a delivery for logged in user
 @require_http_methods(['DELETE'])
 @login_required
 def delete_delivery(request, delivery_id):
@@ -503,7 +482,7 @@ def delete_delivery(request, delivery_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
     
-
+# Viewset for community
 class CommunityViewSet(viewsets.ModelViewSet):
     queryset = Community.objects.all()
     serializer_class = CommunitySerializer
@@ -513,13 +492,7 @@ class CommunityViewSet(viewsets.ModelViewSet):
         # Automatically set the 'created_by' field to the currently authenticated user
         serializer.save(created_by=self.request.user)
 
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from .models import Post, Comment
-from .serializers import PostSerializer, CommentSerializer
-
+# Viewset for handling posts
 class PostViewSet(viewsets.ModelViewSet):
     print ('PostViewSet is hit!')
     queryset = Post.objects.all().select_related('author')
@@ -530,7 +503,6 @@ class PostViewSet(viewsets.ModelViewSet):
         print("Retrieve method hit!")  # Log if the retrieve method is hit
         return super().retrieve(request, *args, **kwargs)
 
-    # Default create method provided by DRF, but you can modify it if you need
     def create(self, request, *args, **kwargs):
         # Print the user data
         print("create inside PostViewSet Hit!")
@@ -540,7 +512,7 @@ class PostViewSet(viewsets.ModelViewSet):
             print("User is not authenticated!")  # Log if the user is not authenticated
 
         # Manually set the 'author' field to the current logged-in user
-        data = request.data.copy()  # Make a copy to modify
+        data = request.data.copy()  
         data['author'] = request.user.id  # Add the author field
         data['community'] = int(data.get('community'))  # Ensure community ID is an integer
 
@@ -566,8 +538,7 @@ class PostViewSet(viewsets.ModelViewSet):
             print(f"Retrieved post: {obj}")  # Print the retrieved post object
         except Post.DoesNotExist:
             print(f"Post with ID {post_id} does not exist.")  # Log if post does not exist
-            raise  # Let the default DRF exception handler catch this and return a 404
-
+            raise 
         return obj
     
     # Action to get the post and its comments (replies)
@@ -599,19 +570,7 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer = CommentSerializer(comment)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+# Viewset on cemmments
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-
-class DeleteCommentView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, post_id, comment_id):
-        try:
-            comment = Comment.objects.get(id=comment_id, post_id=post_id)
-            if comment.author != request.user:
-                return Response({"detail": "You do not have permission to delete this comment."}, status=status.HTTP_403_FORBIDDEN)
-            comment.delete()
-            return Response({"detail": "Comment deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
-        except Comment.DoesNotExist:
-            return Response({"detail": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)

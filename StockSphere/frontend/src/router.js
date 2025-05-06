@@ -12,7 +12,7 @@ import CommunityPosts from './pages/CommunityPosts.vue'
 import CreatePost from './pages/CreatePost.vue'
 import PostDetail from './pages/PostDetail.vue';
 
-
+// Deefining routes for different paths in the application
 const routes = [
   {
     path: '/',
@@ -94,8 +94,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes,
+  history: createWebHistory(), // History mode for cleaner URLs
+  routes, // Register all defined routes
 })
 
-export default router
+export default router // Export router instance to use in app

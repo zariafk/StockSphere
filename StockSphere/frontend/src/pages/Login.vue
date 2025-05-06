@@ -1,45 +1,45 @@
 <template>
-    <div class="login-wrapper">
-      <div class="login-card">
-        <!-- Left side -->
-        <div class="login-left">
-          <h1>Welcome Back</h1>
-          <p>Enter your credentials to continue to StockSphere.</p>
-        </div>
-  
-        <!-- Right side -->
-        <div class="login-right">
-          <h2 v-if="!requires2FA">Login</h2>
-          <h2 v-else>Two-Factor Authentication</h2>
-  
-          <!-- Step 1: Username/Password -->
-          <form v-if="!requires2FA" @submit.prevent="handleLogin">
-            <label for="username">Username</label>
-            <input v-model="username" id="username" type="text" required @input="resetError" />
-  
-            <label for="password">Password</label>
-            <input v-model="password" id="password" type="password" required @input="resetError" />
-  
-            <button type="submit">Login</button>
-            <router-link to="/forgot-password" class="forgot-link">Forgot Password?</router-link>
-          </form>
-  
-          <!-- Step 2: 2FA Code -->
-          <form v-else @submit.prevent="submit2FA">
-            <label for="code">Enter 2FA Code</label>
-            <input v-model="code" id="code" type="text" required maxlength="6" />
-  
-            <button type="submit">Verify</button>
-            <button type="button" class="cancel" @click="cancel2FA">Cancel</button>
-          </form>
-  
-          <p v-if="error" class="error">{{ error }}</p>
-        </div>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <!-- Left side -->
+      <div class="login-left">
+        <h1>Welcome Back</h1>
+        <p>Enter your credentials to continue to StockSphere.</p>
+      </div>
+
+      <!-- Right side -->
+      <div class="login-right">
+        <h2 v-if="!requires2FA">Login</h2>
+        <h2 v-else>Two-Factor Authentication</h2>
+
+        <!-- Step 1: Username/Password -->
+        <form v-if="!requires2FA" @submit.prevent="handleLogin">
+          <label for="username">Username</label>
+          <input v-model="username" id="username" type="text" required @input="resetError" />
+
+          <label for="password">Password</label>
+          <input v-model="password" id="password" type="password" required @input="resetError" />
+
+          <button type="submit">Login</button>
+          <router-link to="/forgot-password" class="forgot-link">Forgot Password?</router-link>
+        </form>
+
+        <!-- Step 2: 2FA Code -->
+        <form v-else @submit.prevent="submit2FA">
+          <label for="code">Enter 2FA Code</label>
+          <input v-model="code" id="code" type="text" required maxlength="6" />
+
+          <button type="submit">Verify</button>
+          <button type="button" class="cancel" @click="cancel2FA">Cancel</button>
+        </form>
+
+        <p v-if="error" class="error">{{ error }}</p>
       </div>
     </div>
-  </template>
+  </div>
+</template>
   
-  <script>
+<script>
   import { useAuthStore } from '../store/auth'
   
   export default {
@@ -60,6 +60,7 @@
       resetError() {
         this.error = ''
       },
+      // Logging in
       async handleLogin() {
         try {
           this.error = ''
@@ -73,6 +74,7 @@
           this.error = 'Login error: ' + err.message
         }
       },
+      // 2 factor authentication
       async submit2FA() {
         try {
           await this.authStore.verify2FA(this.code, this.$router)
@@ -88,9 +90,9 @@
       },
     },
   }
-  </script>
+</script>
   
-  <style scoped>
+<style scoped>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
   
   .login-wrapper {
@@ -205,13 +207,14 @@
     margin-top: 1.2rem;
     text-align: center;
   }
+  
   .forgot-link {
-  color: #b43de6;
-  margin-top: 1rem;
-  text-align: center;
-  display: block;
-  text-decoration: underline;
-  cursor: pointer;
-}
-  </style>
+    color: #b43de6;
+    margin-top: 1rem;
+    text-align: center;
+    display: block;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+</style>
   

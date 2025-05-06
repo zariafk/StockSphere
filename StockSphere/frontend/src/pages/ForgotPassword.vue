@@ -1,15 +1,16 @@
 <template>
-    <div class="forgot-password">
-      <h2>Forgot Password</h2>
-      <form @submit.prevent="submitEmail">
-        <input type="email" v-model="email" placeholder="Enter your email" required />
-        <button type="submit">Send Reset Link</button>
-      </form>
-      <p v-if="message">{{ message }}</p>
-    </div>
-  </template>
+  <div class="forgot-password">
+    <h2>Forgot Password</h2>
+    <!-- For forgot password feature -->
+    <form @submit.prevent="submitEmail">
+      <input type="email" v-model="email" placeholder="Enter your email" required />
+      <button type="submit">Send Reset Link</button>
+    </form>
+    <p v-if="message">{{ message }}</p>
+  </div>
+</template>
   
-  <script>
+<script>
   export default {
     data() {
       return {
@@ -34,43 +35,40 @@
         }
         return cookieValue;
       },
-  
       
       // Method to submit email for password reset
       async submitEmail() {
-  const csrfToken = this.getCSRFToken();  // Get CSRF token from cookies
+        const csrfToken = this.getCSRFToken();  // Get CSRF token from cookies
 
-  try {
-    const response = await fetch('http://localhost:8000/password_reset', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrfToken,  // Include CSRF token in the request header
-      },
-      credentials: 'include',  // Ensure cookies are sent with the request
-      body: JSON.stringify({ email: this.email }),  // Send the email entered by the user
-    });
+        try {
+          const response = await fetch('http://localhost:8000/password_reset', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken,  // Include CSRF token in the request header
+            },
+            credentials: 'include',  // Ensure cookies are sent with the request
+            body: JSON.stringify({ email: this.email }),  // Send the email entered by the user
+          });
 
-    // Check if the response is in JSON format
-    if (response.ok) {
-      const data = await response.json();
-      this.message = data.message || 'Check your email for a reset link.';
-    } else {
-      const errorData = await response.json();
-      this.message = errorData.error || 'An error occurred while sending the reset link.';
-    }
-  } catch (error) {
-    // Handle network or unexpected errors
-    this.message = 'Something went wrong, please try again later.';
-  }
-}
-
+          // Check if the response is in JSON format
+          if (response.ok) {
+            const data = await response.json();
+            this.message = data.message || 'Check your email for a reset link.';
+          } else {
+            const errorData = await response.json();
+            this.message = errorData.error || 'An error occurred while sending the reset link.';
+          }
+        } catch (error) {
+          // Handle network or unexpected errors
+          this.message = 'Something went wrong, please try again later.';
+        }
+      }
     },
-
   };
-  </script>
+</script>
   
-  <style scoped>
+<style scoped>
   .forgot-password {
     max-width: 400px;
     margin: 100px auto;
@@ -116,5 +114,5 @@
     color: green;
     margin-top: 1rem;
   }
-  </style>
+</style>
   

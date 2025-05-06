@@ -72,7 +72,7 @@
             content: this.newComment,
           });
   
-          // Ensure comments is defined and then push the new comment
+          // Ensure comments are defined and then push the new comment
           if (!this.post.comments) {
             this.post.comments = [];
           }
@@ -85,9 +85,9 @@
       },
     },
   };
-  </script>
+</script>
   
-  <style scoped>
+<style scoped>
   .post-detail-container {
     margin-top: 100px;
     padding: 20px;
@@ -96,26 +96,26 @@
   }
   
   .post-header {
-    margin-bottom: 5px; /* Reduced the margin between author and title */
+    margin-bottom: 5px; 
   }
   
   .author-username {
     font-size: 1.2em;
     color: #666;
     font-weight: bold;
-    margin: 0; /* Remove margin to keep it closer to the post title */
+    margin: 0; 
   }
   
   .post-title {
     font-size: 2.5em;
-    color: #eaeaea;  /* Controls the color of the post title */
-    margin: 0; /* Remove margin to make it closer to the author's name */
+    color: #eaeaea;  
+    margin: 0; 
   }
   
   .post-description {
     font-size: 1.2em;
-    color: #eaeaea;  /* Controls the color of the post content (description) */
-    margin-top: 10px; /* Reduced space between title and description */
+    color: #eaeaea;  
+    margin-top: 10px; 
   }
   
   .comment-section {
@@ -164,5 +164,5 @@
   button:hover {
     background-color: #9b2bd3;
   }
-  </style>
+</style>
   

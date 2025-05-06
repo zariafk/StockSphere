@@ -3,7 +3,8 @@
       <h1>Deliveries <button class="add-btn" @click="openAddModal">+</button></h1>
   
       <button class="modal-button" @click="showPastModal = true">Past Deliveries</button>
-  
+      
+      <!-- Table for listing current deliveries -->
       <table class="deliveries-table">
         <thead>
           <tr>
@@ -19,6 +20,7 @@
           </tr>
         </thead>
         <tbody>
+          <!-- Loop through current deliveries -->
           <tr v-for="(delivery, index) in deliveriesStore.deliveries" :key="index">
             <td>{{ index + 1 }}</td>
             <td>{{ delivery.from }}</td>
@@ -29,6 +31,7 @@
             <td><div v-for="res in delivery.resources" :key="res.resourceId">{{ fmtGBP(getCost(res.resourceId, res.cases)) }}</div></td>
             <td>{{ delivery.notes }}</td>
             <td>
+              <!-- Actions -->
               <PencilLine class="icon-button edit" @click="startEdit(index)" />
               <Trash2 class="icon-button delete" @click="deleteDelivery(index)" />
               <input type="checkbox" @change="markCompleted(index)" />
@@ -37,10 +40,10 @@
         </tbody>
       </table>
   
-      <!-- Add/Edit Modal -->
+      <!-- Add/edit modal -->
       <div v-if="showModal" class="modal-overlay">
         <div class="modal">
-          <h2>{{ editMode ? 'Edit Delivery' : 'Add New Delivery' }}</h2>
+          <h2>Add new delivery</h2>
           <div class="grid-container">
             <div class="form-group">
               <label>Where From?</label>
@@ -79,6 +82,7 @@
           <table class="deliveries-table">
             <thead>
               <tr>
+                <!-- Table to list past deliveries -->
                 <th>#</th>
                 <th>From</th>
                 <th>Total Cost</th>
@@ -91,6 +95,7 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Loop through past deliveries -->
               <tr v-for="(delivery, index) in deliveriesStore.pastDeliveries" :key="index">
                 <td>{{ index + 1 }}</td>
                 <td>{{ delivery.from }}</td>
@@ -112,34 +117,39 @@
         </div>
       </div>
     </div>
-  </template>
+</template>
   
-  <script setup>
+<script setup>
   import { ref, onMounted } from 'vue'
   import { useResourceStore } from '../store/resources'
   import { useDeliveriesStore } from '../store/deliveries'
-  import { PencilLine, Trash2 } from 'lucide-vue-next'
+  import { Trash2 } from 'lucide-vue-next'
+  import { getCSRFToken } from '../store/auth'
   
   const resourceStore = useResourceStore()
   const deliveriesStore = useDeliveriesStore()
   
   onMounted(async () => {
-    await resourceStore.fetchResources()
-    await deliveriesStore.fetchDeliveries()
+    await resourceStore.fetchResources() // Fetch resources from the store
+    await deliveriesStore.fetchDeliveries() // Fetch deliveries from the store
   })
   
+  // Modal visibility and state
   const showModal = ref(false)
   const showPastModal = ref(false)
   const editMode = ref(false)
   const editingIndex = ref(null)
   
+  // Form data
   const from = ref('')
   const notes = ref('')
   const resourceUsages = ref([{ resourceId: '', cases: 1 }])
   
+  // Add/remove resource rows in the form
   const addResourceRow = () => resourceUsages.value.push({ resourceId: '', cases: 1 })
   const removeResourceRow = (i) => resourceUsages.value.splice(i, 1)
   
+  // Reset form data after close or submit
   const resetForm = () => {
     from.value = ''
     notes.value = ''
@@ -148,16 +158,19 @@
     editingIndex.value = null
   }
   
+  // Open the modal for adding a new delivery
   const openAddModal = () => {
     resetForm()
     showModal.value = true
   }
   
+  // Close the modal
   const closeModal = () => {
     showModal.value = false
     resetForm()
   }
   
+  // Helper function to get resource details
   const getResourceName = (id) => {
     const res = resourceStore.resources.find(r => r.id === id)
     return res ? res.name : 'Unknown'
@@ -173,6 +186,7 @@
     return res ? res.unit_price * res.units_per_pack * cases : 0
   }
   
+  // Calculate the total cost in GBP currency 
   const calculateTotal = (items) => {
     return items.reduce((sum, r) => sum + getCost(r.resourceId, r.cases), 0)
   }
@@ -206,26 +220,19 @@
   
     closeModal()
   }
-  
+
+  // Delete selected delivery
   const deleteDelivery = async (i) => {
     await deliveriesStore.deleteDelivery(i)
     await deliveriesStore.fetchDeliveries()
   }
   
+  // Delete past delivery by ID
   const deletePast = async (id) => {
     await deliveriesStore.deletePastDeliveryById(id)
   }
   
-  const startEdit = (i) => {
-    const d = deliveriesStore.deliveries[i]
-    from.value = d.from_location
-    notes.value = d.notes
-    resourceUsages.value = JSON.parse(JSON.stringify(d.resources))
-    editingIndex.value = i
-    editMode.value = true
-    showModal.value = true
-  }
-  
+  // Mark as completed 
   const markCompleted = async (i) => {
     await deliveriesStore.markAsCompleted(i)
     await deliveriesStore.fetchDeliveries()
@@ -234,7 +241,6 @@
     
   
   <style scoped>
-  /* Use your familiar style structure like Planning.vue */
   .deliveries-container {
     color: #eaeaea;
     margin-top: 100px;
@@ -317,11 +323,11 @@
   }
   .submit-button, .close-button, .add-row {
     padding: 8px 16px;
-    border: none;
     border-radius: 5px;
   }
   .submit-button {
     background-color: #b43de6;
+    border: none;
     color: white;
   }
   .close-button {
@@ -330,10 +336,11 @@
     color: white;
   }
   .resource-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+    border: 2px #b43de6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
 .resource-row select,

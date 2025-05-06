@@ -4,20 +4,22 @@ import { getCSRFToken } from './auth'
 
 export const useDeliveriesStore = defineStore('deliveries', {
   state: () => ({
-    deliveries: [],
-    pastDeliveries: []
+    deliveries: [], // Array to hold ongoing deliveries
+    pastDeliveries: [] // Array to hold completed deliveries
   }),
 
   actions: {
+    // Fetch deliveries from API
     async fetchDeliveries() {
       try {
         const res = await fetch('http://localhost:8000/api/deliveries', {
-          credentials: 'include'
+          credentials: 'include' // Ensure cookies are included within request
         })
         const data = await res.json()
 
         const resourceStore = useResourceStore()
 
+        // Filter and map ongoing deliverables
         this.deliveries = data
           .filter(d => !d.completed)
           .map(delivery => ({
@@ -33,7 +35,8 @@ export const useDeliveriesStore = defineStore('deliveries', {
               }
             })
           }))
-
+        
+        // Filter and map completed deliveries 
         this.pastDeliveries = data
           .filter(d => d.completed)
           .map(delivery => ({
@@ -54,6 +57,7 @@ export const useDeliveriesStore = defineStore('deliveries', {
                 cost
               }
             }),
+            // Calculate the total cost of resources 
             totalCost: delivery.resources.reduce((sum, res) => {
               const resourceInfo = resourceStore.resources.find(r => r.id === res.resource) || {}
               const unitsPerPack = resourceInfo.units_per_pack || 1;
@@ -67,21 +71,23 @@ export const useDeliveriesStore = defineStore('deliveries', {
       }
     },
 
+    // Add a new delivery and update resources accordingly
     async addDelivery(delivery) {
       try {
         const res = await fetch('http://localhost:8000/api/deliveries/add', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken()
+            'X-CSRFToken': getCSRFToken() // Add CSRF token to the request
           },
           credentials: 'include',
-          body: JSON.stringify(delivery)
+          body: JSON.stringify(delivery) // Send the delivery data as JSON
         })
         const newDelivery = await res.json()
-        this.deliveries.push(newDelivery)
+        this.deliveries.push(newDelivery) // Ass delivery to deliveries list
 
         const resourceStore = useResourceStore()
+        // Update arriving unitd for resources in the new delivery
         for (const resItem of newDelivery.resources) {
           const resource = resourceStore.resources.find(r => r.id === resItem.resource)
           if (resource) {
@@ -95,8 +101,9 @@ export const useDeliveriesStore = defineStore('deliveries', {
       } catch (err) {
         console.error('Failed to add delivery', err)
       }
-    },
+    },      
 
+    // Delete a specific delivery and adjust arriving units for the resources(s)
     async deleteDelivery(index) {
       const delivery = this.deliveries[index]
       if (!delivery) return
@@ -130,6 +137,7 @@ export const useDeliveriesStore = defineStore('deliveries', {
       }
     },
 
+    // Delete a completed delivery by its ID
     async deletePastDeliveryById(id) {
       try {
         const res = await fetch(`http://localhost:8000/api/deliveries/${id}/delete`, {
@@ -141,6 +149,7 @@ export const useDeliveriesStore = defineStore('deliveries', {
         })
 
         if (res.ok) {
+          // Filter out the deleted delivery from the past deliveries
           this.pastDeliveries = this.pastDeliveries.filter(d => d.id !== id)
         }
 
@@ -149,6 +158,7 @@ export const useDeliveriesStore = defineStore('deliveries', {
       }
     },
 
+    // Mark a delivery as completed amd update the corresponding resource(s)
     async markAsCompleted(index) {
       const delivery = this.deliveries[index]
       if (!delivery) return
@@ -177,6 +187,7 @@ export const useDeliveriesStore = defineStore('deliveries', {
           }
         }
 
+        // Move the delivery from ongoing to completed deliveries
         this.deliveries.splice(index, 1)
 
         this.pastDeliveries.push({

@@ -34,7 +34,6 @@ urlpatterns = [
     #DELIVERIES endpoints
     path('api/deliveries', views.get_deliveries, name='get_deliveries'),
     path('api/deliveries/add', views.add_delivery, name='add_delivery'),
-    path('api/deliveries/<int:delivery_id>/update', views.update_delivery, name='update_delivery'),
     path('api/deliveries/<int:delivery_id>/delete', views.delete_delivery, name='delete_delivery'),
 
     #2FA
@@ -46,10 +45,11 @@ urlpatterns = [
     path('password_reset_confirm/<uidb64>/<token>', views.password_reset_confirm, name='password_reset_confirm'),
     path('password_reset_complete', views.password_reset_complete, name='password_reset_complete'),
 
-    #NNOTIFICATIONS
+    #NOTIFICATIONS
     path('api/dashboard', views.dashboard, name='dashboard'),
     path('api/notifications/<int:notification_id>/read', views.mark_notification_as_read, name='mark_notification_as_read'), 
 
+    #FORUM
     path('api/', include(router.urls)),
     path('api/posts/<int:pk>', PostViewSet.as_view({'get': 'retrieve'}), name='post-detail'),
     path('api/posts/<int:pk>/comments', PostViewSet.as_view({'post': 'comment'}), name='post-comments'),
